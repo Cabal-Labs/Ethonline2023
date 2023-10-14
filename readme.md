@@ -1,6 +1,6 @@
-#Cabal Sorel ETH Online 2023
+# Cabal Sorel ETH Online 2023
 
-##Authors:
+## Authors:
 
-#### Brendan Probst, Marco Salazar Torres, Bryan Kyritz, Cris Sosa
+### Brendan Probst, Marco Salazar Torres, Bryan Kyritz, Cris Sosa
 
