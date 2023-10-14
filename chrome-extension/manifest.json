@@ -1,0 +1,32 @@
+{
+	"manifest_version": 3,
+	"name": "Cabal Sorel",
+	"description": "Use SocialRelations to get better recommendations on decentralized social media.",
+	"version": "0.0.1",
+	"icons": {
+		"16": "img/logo-16.png",
+		"34": "img/logo-34.png",
+		"48": "img/logo-48.png",
+		"128": "img/logo-128.png"
+	},
+	"action": {
+		"default_popup": "hello.html",
+		"default_icon": "img/logo-16.png"
+	},
+	"background": {
+		"service_worker": "service-worker.js",
+		"type": "module"
+	},
+
+	"minimum_chrome_version": "102",
+
+	"permissions": ["alarms", "storage", "activeTab"],
+	"host_permissions": ["https://hey.xyz/*"],
+	"content_scripts": [
+		{
+			"matches": ["https://hey.xyz/*"],
+			"js": ["inject.js"],
+			"css": ["styles.css"]
+		}
+	]
+}
