@@ -8,7 +8,6 @@ initDB().then((database) => {
 	chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 		// console.log("message", message);
 		// console.log("sender", sender);
-
 		if (message.command === "printIDB") {
 			getIDB(db, "account").then((data) => {
 				sendResponse({ result: data });
@@ -40,6 +39,10 @@ initDB().then((database) => {
 			}).then((data) => {
 				sendResponse({ result: "Account Saved" });
 			});
+		}
+		if (message.command === "MarcosMessage") {
+			// do something
+			sendResponse({ result: "Hello from the service worker" });
 		} else {
 			sendResponse({ result: "Command not recognized" });
 		}
@@ -64,6 +67,7 @@ function initDB() {
 			const objectStore = db.createObjectStore("account", {
 				keyPath: "privateKey",
 			});
+
 			console.log("IndexedDB database upgraded");
 		};
 	});
