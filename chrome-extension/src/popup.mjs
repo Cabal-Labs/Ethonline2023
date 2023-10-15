@@ -31,6 +31,7 @@ function setUpAccount(e) {
 		privateKey,
 		address,
 	};
+	console.log(accountSetUpData);
 	chrome.runtime.sendMessage(
 		{ command: "setUpAccount", data: accountSetUpData },
 		(response) => {
@@ -149,26 +150,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 	let loader = document.getElementById("extension-loader");
 	let container = document.getElementById("extension-content");
 	let footer = document.getElementById("extension-footer");
-	// dev shit ------------------------------------
-	let printBtn = document.createElement("button");
-	printBtn.textContent = "print idb to console";
-	printBtn.addEventListener("click", () => {
-		chrome.runtime.sendMessage({ command: "printIDB" }, (response) => {
-			console.log("printIDB: in popup", response.result);
-		});
-	});
-	container.appendChild(printBtn);
 
-	let clearBtn = document.createElement("button");
-	clearBtn.textContent = "Clear IDB";
-	clearBtn.addEventListener("click", () => {
-		chrome.runtime.sendMessage({ command: "clearIDB" }, (response) => {
-			console.log("clearIDB: in popup", response);
-		});
-	});
-	container.appendChild(clearBtn);
-	// ---------------------------------
-	generateHeader(container);
+	// generateHeader(container);
 	// navIndex The three states of the extension window are:
 	// 	1		 not logged in
 	// 	2		 logged in, but not activated
@@ -179,6 +162,25 @@ document.addEventListener("DOMContentLoaded", async function () {
 		generateWelcomeScreen(container);
 	} else if (navIndex === 2) {
 		generateLoggedInScreen(container, account);
+		// dev shit ------------------------------------
+		let printBtn = document.createElement("button");
+		printBtn.textContent = "print idb to console";
+		printBtn.addEventListener("click", () => {
+			chrome.runtime.sendMessage({ command: "printIDB" }, (response) => {
+				console.log("printIDB: in popup", response.result);
+			});
+		});
+		container.appendChild(printBtn);
+
+		let clearBtn = document.createElement("button");
+		clearBtn.textContent = "Clear IDB";
+		clearBtn.addEventListener("click", () => {
+			chrome.runtime.sendMessage({ command: "clearIDB" }, (response) => {
+				console.log("clearIDB: in popup", response);
+			});
+		});
+		container.appendChild(clearBtn);
+		// ---------------------------------
 	} else if (navIndex === 3) {
 		// testing ethers --------------------------------------------------------
 		EthersProvider.getBlockNumber().then((result) => {

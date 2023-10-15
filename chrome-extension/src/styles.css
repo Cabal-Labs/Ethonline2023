@@ -1,22 +1,28 @@
 * {
 	box-sizing: border-box;
 }
+#extension {
+	background-color: transparent;
+	box-shadow: 0px 4px 20px -5px #05ff00, 0px 10px 15px 10px rgba(1, 35, 1, 0.25);
+}
 #extension-body {
 	width: 550px;
 	height: 425px;
+	border-radius: 10px;
 	flex-shrink: 0;
-	border-radius: 20px;
 	border: 2px solid #40d63d;
 	background: radial-gradient(
 		84.83% 86.24% at 32.72% 73.81%,
 		#000 0%,
 		#072102 100%
 	);
-	box-shadow: 0px 4px 20px -5px #05ff00, 0px 10px 15px 10px rgba(1, 35, 1, 0.25);
+	padding: 12px;
+	margin: 0;
+	color: white;
 }
 #extension-body #extension-header {
 	width: 100%;
-	padding: 20px;
+	padding-block: 20px;
 	display: flex; /* Add this line to make the children of #extension-header align in a row */
 	justify-content: space-between; /* Add this line to distribute the space between the children */
 }
