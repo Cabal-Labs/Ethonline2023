@@ -1,4 +1,4 @@
-async function AddRecommendationTab() {
+async function AddRecommendationTabButton() {
 	// 1 - create a slot next to the following/highlights for our widget button to go
 	// 1.1 - Selects the span element with inner HTML equal to "highlights" from the DOM
 	// const spans = document.getElementsByTagName("span");
@@ -38,11 +38,17 @@ function createDomElement(html) {
 	const dom = new DOMParser().parseFromString(html, "text/html");
 	return dom.body.firstElementChild;
 }
-document.addEventListener("DOMContentLoaded", AddRecommendationTab());
+document.addEventListener("DOMContentLoaded", AddRecommendationTabButton());
 document.addEventListener("DOMContentLoaded", function () {
 	var button = document.getElementById("cabal-sorel-button");
 	console.log("button", button);
-	button.addEventListener("click", function () {
-		console.log("clicked");
+	button.addEventListener("click", async function () {
+		await injectRecommendedPosts();
 	});
 });
+async function injectRecommendedPosts() {
+	// fetch the most recent posts
+	// format the data to match the lester feed data
+	// todo = grab the container where the original feed is and add a new tab pane
+	// todo = insert the new recommended posts into the new feed slot
+}

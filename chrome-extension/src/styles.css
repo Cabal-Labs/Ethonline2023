@@ -1,0 +1,131 @@
+* {
+	box-sizing: border-box;
+}
+#extension-body {
+	width: 550px;
+	height: 425px;
+	flex-shrink: 0;
+	border-radius: 20px;
+	border: 2px solid #40d63d;
+	background: radial-gradient(
+		84.83% 86.24% at 32.72% 73.81%,
+		#000 0%,
+		#072102 100%
+	);
+	box-shadow: 0px 4px 20px -5px #05ff00, 0px 10px 15px 10px rgba(1, 35, 1, 0.25);
+}
+#extension-body #extension-header {
+	width: 100%;
+	padding: 20px;
+	display: flex; /* Add this line to make the children of #extension-header align in a row */
+	justify-content: space-between; /* Add this line to distribute the space between the children */
+}
+
+#extension-body #extension-header div {
+	display: flex; /* Add this line to make the children of the div align in a column */
+	flex-direction: column; /* Add this line to make the children of the div align in a column */
+}
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+	margin: 0;
+}
+#extension-body #extension-header h1 {
+	text-shadow: 0px 2px 6px rgba(83, 193, 255, 0.25);
+	font-family: Rajdhani, Helvetica, sans-serif;
+	font-size: 40px;
+	font-style: normal;
+	font-weight: 800;
+	line-height: normal;
+	background: linear-gradient(180deg, #1ddb80 0%, #1bb8cd 100%);
+	background-clip: text;
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+}
+
+#extension-body #extension-header h2 {
+	text-shadow: 0px 2px 6px rgba(83, 193, 255, 0.25);
+	font-family: Rajdhani, Helvetica, sans-serif;
+	font-size: 20px;
+	font-style: italic;
+	font-weight: 200;
+	line-height: normal;
+	background: linear-gradient(180deg, #1ddb80 0%, #1bb8cd 100%);
+	background-clip: text;
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+}
+#extension-body #extension-header nav {
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-end;
+	align-items: flex-end;
+}
+#extension-body #extension-header a {
+	color: #fff;
+	font-family: Rajdhani, Helvetica, sans-serif;
+	font-size: 16px;
+	font-style: normal;
+	font-weight: 300;
+	line-height: normal;
+	opacity: 0.5;
+	text-decoration: none;
+	transition: opacity 0.2s ease-in-out;
+}
+
+#extension-body #extension-header a:hover {
+	opacity: 1;
+	text-decoration: underline;
+	transition: opacity 0.2s ease-in-out;
+}
+
+#extension-footer {
+	width: 100%;
+	height: 50px;
+}
+#extension-footer p {
+	color: #ffffff;
+}
+#extension-footer #welcome-message {
+	text-align: center;
+	text-shadow: 0px 2px 6px rgba(83, 193, 255, 0.25);
+	font-family: Inter;
+	font-size: 15px;
+	font-style: italic;
+	font-weight: 200;
+	line-height: normal;
+	background: linear-gradient(180deg, #1ddb80 0%, #1bb8cd 100%);
+	background-clip: text;
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+}
+#extension-footer #progress-dots .dot {
+	height: 0.5rem;
+	width: 0.5rem;
+	border-radius: 50%;
+	border: 2px solid #ffffff;
+	display: inline-block;
+	margin: 0 0.5rem;
+	background: transparent;
+}
+.dot.active {
+	background: #ffffff;
+}
+#extension-footer #progress-dots {
+	position: absolute;
+	bottom: 0;
+	left: 50%;
+	transform: translateX(-50%);
+	margin-bottom: 0.5rem;
+}
+/* inject */
+#cabal-sorel-button {
+	z-index: 1000;
+	background-color: red;
+	position: fixed;
+	top: 10px;
+	left: 10px;
+}

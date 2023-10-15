@@ -19,6 +19,19 @@ initDB().then((database) => {
 				sendResponse({ result: "database cleared" });
 			});
 		}
+		if (message.command === "checkForExistingAccount") {
+			getIDB(db, "account").then((data) => {
+				console.log("Db data in checkForExistingAccount", data);
+				// parse the json string back into an object
+				let parsed = JSON.parse(data);
+				if (parsed.length > 0) {
+					sendResponse({ result: parsed[0] });
+				} else {
+					sendResponse({ result: "No account found" });
+				}
+			});
+			return true;
+		}
 		if (message.command === "setUpAccount") {
 			let data = message.data;
 			storeValue(db, "account", data.privateKey, {

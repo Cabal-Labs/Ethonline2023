@@ -10,11 +10,11 @@
 		"128": "img/logo-128.png"
 	},
 	"action": {
-		"default_popup": "hello.html",
+		"default_popup": "src/popup.html",
 		"default_icon": "img/logo-16.png"
 	},
 	"background": {
-		"service_worker": "service-worker.js",
+		"service_worker": "src/service-worker.js",
 		"type": "module"
 	},
 
@@ -25,8 +25,8 @@
 	"content_scripts": [
 		{
 			"matches": ["https://hey.xyz/*"],
-			"js": ["inject.js"],
-			"css": ["styles.css"]
+			"js": ["src/inject.js"],
+			"css": ["src/styles.css"]
 		}
 	]
 }

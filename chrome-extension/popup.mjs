@@ -1,4 +1,9 @@
-console.log("This is from a popup");
+import { ethers } from "ethers";
+// import ethers from "ethers";
+const infura_url =
+	"https://polygon-mumbai.infura.io/v3/d911d6ca657e4fe4ae77ed8b2426dadd";
+
+const EthersProvider = new ethers.JsonRpcProvider(infura_url);
 function testClick() {
 	console.log("clicked");
 }
@@ -6,25 +11,63 @@ function testClick() {
 function setUpAccount(e) {
 	e.preventDefault();
 	console.log("setUpAccount e", e);
-	let privateKey = "";
-	// todo: get the value of the private key
-	// todo: do what is needed using ether.js
-	// todo: store the result of the account setup in indexedDB
+	// let inputValue = e.target.elements.walletAddress.value; // get the value of the private key
+	// try {
+	// 	wallet = new ethers.Wallet(privateKey);
+	// } catch (e) {
+	// 	alert("Invalid Private Key");
+	// 	return;
+	// }
+	const wallet = ethers.Wallet.createRandom();
+
+	// Get the wallet's private key and address
+	const privateKey = wallet.privateKey;
+	const address = wallet.address;
+
+	// store the result of the account setup in indexedDB
 	const accountSetUpData = {
-		privateKey: "0x123456",
-		publicKey: "0x123456",
+		privateKey,
+		address,
 	};
 	chrome.runtime.sendMessage(
 		{ command: "setUpAccount", data: accountSetUpData },
 		(response) => {
-			// Your logic to handle the response
-			console.log(response.result); // Should log "Received data: ..."
+			console.log(response); // Should log "Account Saved"
 		}
 	);
 }
+
 document.addEventListener("DOMContentLoaded", function () {
 	let loader = document.getElementById("extension-loader");
 	let container = document.getElementById("extension-content");
+	// dev shit ------------------------------------
+	let printBtn = document.createElement("button");
+	printBtn.textContent = "print idb to console";
+	printBtn.addEventListener("click", () => {
+		chrome.runtime.sendMessage({ command: "printIDB" }, (response) => {
+			console.log("printIDB: in popup", response.result);
+		});
+	});
+	container.appendChild(printBtn);
+
+	let clearBtn = document.createElement("button");
+	clearBtn.textContent = "Clear IDB";
+	clearBtn.addEventListener("click", () => {
+		chrome.runtime.sendMessage({ command: "clearIDB" }, (response) => {
+			console.log("clearIDB: in popup", response);
+		});
+	});
+	container.appendChild(clearBtn);
+	// testing ethers
+	let blockNumber = 0;
+	EthersProvider.getBlockNumber().then((result) => {
+		blockNumber = result;
+	});
+	let footer = document.getElementById("extension-footer");
+	let footerText = document.createElement("p");
+	footerText.textContent = "Current Block Number " + blockNumber.toString();
+	footer.appendChild(footerText);
+	// --------------------------------------------------------------------
 	// the three states of the extension window are:
 	// not logged in
 	// logged in, but not activated
@@ -33,9 +76,6 @@ document.addEventListener("DOMContentLoaded", function () {
 	let activated = false;
 	let account = "";
 	if (!loggedIn) {
-		// fetch some stuff async
-		// hide the loader when it's done
-
 		// Create welcome message
 		var welcomeMessage = document.createElement("p");
 		welcomeMessage.textContent =
@@ -70,6 +110,8 @@ document.addEventListener("DOMContentLoaded", function () {
 		activateButton.textContent = "Activate";
 		activateButton.addEventListener("click", testClick);
 		container.appendChild(activateButton);
+
+		// testing ethers & infura integration
 	} else if (loggedIn && activated) {
 		// todo
 	}
