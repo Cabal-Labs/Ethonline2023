@@ -43,3 +43,9 @@ function generateEthereumKeyPair() {
         publicKey: bufferToHex(publicKey)
     };
 }
+
+export{
+    generateEthereumKeyPair,
+    deriveEthereumAddress,
+    signMessageEth
+}
