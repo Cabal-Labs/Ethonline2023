@@ -1,4 +1,5 @@
 import { ethers } from "../node_modules/ethers/dist/ethers.js";
+import { createButton } from "./utils/ui.js";
 // import ethers from "ethers";
 let navIndex = 1;
 
@@ -104,14 +105,12 @@ function generateWelcomeScreen(container) {
 	var walletInput = document.createElement("input");
 	walletInput.type = "text";
 	walletInput.name = "walletAddress";
+	walletInput.className = "private-key-input";
 	walletInput.placeholder = "Enter your wallet's private address here";
 	form.appendChild(walletInput);
 
 	// Create confirm button
-	var confirmButton = document.createElement("button");
-	confirmButton.textContent = "Confirm";
-	confirmButton.type = "submit";
-	form.appendChild(confirmButton);
+	createButton("Paste Private Key", () => {}, "primary", "submit", container);
 	container.appendChild(form);
 }
 function generateLoggedInScreen(container, account) {

@@ -1,5 +1,6 @@
 * {
 	box-sizing: border-box;
+	font-family: Rajdhani, Helvetica, sans-serif;
 }
 #extension {
 	background-color: transparent;
@@ -98,7 +99,7 @@ h6 {
 #extension-footer #welcome-message {
 	text-align: center;
 	text-shadow: 0px 2px 6px rgba(83, 193, 255, 0.25);
-	font-family: Inter;
+	font-family: Rajdhani, Helvetica, sans-serif;
 	font-size: 15px;
 	font-style: italic;
 	font-weight: 200;
@@ -126,6 +127,48 @@ h6 {
 	left: 50%;
 	transform: translateX(-50%);
 	margin-bottom: 0.5rem;
+}
+
+// Buttons and inputs
+input.private-key-input {
+	display: flex;
+	background-color: transparent;
+	width: 354px;
+	padding: 4px 4px 4px 10px;
+	justify-content: space-between;
+	align-items: center;
+	border-radius: 14px;
+	border: 1px solid rgba(124, 124, 124, 0.4);
+	color: #fff;
+
+	font-family: Rajdhani, Helvetica, sans-serif;
+	font-size: 18px;
+	font-style: normal;
+	font-weight: 300;
+	line-height: normal;
+}
+input.private-key-input::placeholder {
+	opacity: 0.5;
+}
+.cabal-btn.primary {
+	display: flex;
+	padding: 8.5px 15.5px;
+	justify-content: center;
+	align-items: center;
+	border-radius: 10px;
+	border: none;
+	background: linear-gradient(180deg, #adfccd 0%, #34c680 72.92%);
+}
+.cabal-btn.primary span {
+	font-family: Rajdhani, Helvetica, sans-serif;
+	font-size: 16px;
+	font-style: normal;
+	font-weight: 500;
+	line-height: normal;
+	background: linear-gradient(180deg, #093312 15.63%, #000 80.73%);
+	background-clip: text;
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
 }
 /* inject */
 #cabal-sorel-button {
