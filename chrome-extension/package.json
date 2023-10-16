@@ -10,6 +10,9 @@
 	"author": "",
 	"license": "ISC",
 	"dependencies": {
+		"@apollo/client": "^3.8.6",
+		"crypto": "^1.0.1",
+		"ethereumjs-util": "^7.1.5",
 		"ethers": "^6.8.0"
 	},
 	"devDependencies": {
