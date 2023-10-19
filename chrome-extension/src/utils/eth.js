@@ -1,51 +1,79 @@
-import { privateToPublic, publicToAddress, bufferToHex,ecsign, toRpcSig, keccakFromString,bufferToHex } from 'ethereumjs-util';
+const API_URL = '';
 
-async function personalSign(message, privateKey) {
-    const messageHash = keccakFromString(`\x19Ethereum Signed Message:\n${message.length}${message}`, 256);
-    const signature = ecsign(messageHash, privateKey);
-    return Buffer.from(toRpcSig(signature.v, signature.r, signature.s).slice(2), 'hex');
+
+async function generateKeyPair() {
+    try {
+        const response = await fetch(`${API_URL}/generate-key-pair`);
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Error generating key pair:', error);
+    }
 }
 
 
-async function signMessageEth(aPrivKey, wPrivKey, message) {
-
-    const _message = Buffer.from(message);
-
-
-    const avatarPrivateKey = Buffer.from(aPrivKey, 'hex');
-    const walletPrivateKey = Buffer.from(wPrivKey, 'hex');
-
-    const avatarSignature = await personalSign(_message, avatarPrivateKey);
-    const walletSignature = await personalSign(_message, walletPrivateKey);
-
-
-    return [avatarSignature, walletSignature ]
+async function doubleSignMessage(aPrivKey, wPrivKey, message) {
+    try {
+        const response = await fetch(`${API_URL}/double-sign-message`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                aPrivKey: aPrivKey,
+                wPrivKey: wPrivKey,
+                message: message,
+            }),
+        });
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Error double signing message:', error);
+    }
 }
 
-function deriveEthereumAddress(privateKeyHex) {
-   
-    const privateKey = Buffer.from(privateKeyHex, 'hex');
-
-    const publicKey = privateToPublic(privateKey);
-
-    const addressBuffer = publicToAddress(publicKey);
-    
-    return bufferToHex(addressBuffer);
+async function signMessage(aPrivKey, message) {
+    try {
+        const response = await fetch(`${API_URL}/sign-message`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                aPrivKey: aPrivKey,
+                message: message,
+            }),
+        });
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Error signing message:', error);
+    }
 }
 
-function generateEthereumKeyPair() {
-    const privateKey = randomBytes(32);
-
-    const publicKey = privateToPublic(privateKey);
-
-    return {
-        privateKey: bufferToHex(privateKey),
-        publicKey: bufferToHex(publicKey)
-    };
+export {
+    generateKeyPair,
+    doubleSignMessage,
+    signMessage
 }
 
-export{
-    generateEthereumKeyPair,
-    deriveEthereumAddress,
-    signMessageEth
-}
+// // Example Usage
+// (async function() {
+//     const keyPair = await generateKeyPair();
+//     console.log(keyPair);
+
+//     const doubleSignature = await doubleSignMessage('YOUR_APRIVATEKEY', 'YOUR_WPRIVATEKEY', 'Your Message');
+//     console.log(doubleSignature);
+
+//     const signature = await signMessage('YOUR_APRIVATEKEY', 'Your Message');
+//     console.log(signature);
+// })();

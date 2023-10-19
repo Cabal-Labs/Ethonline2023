@@ -1,5 +1,6 @@
 import { ethers } from "../node_modules/ethers/dist/ethers.js";
 import { createButton } from "./utils/ui.js";
+
 // import ethers from "ethers";
 let navIndex = 1;
 
@@ -14,18 +15,17 @@ function testClick() {
 function setUpAccount(e) {
 	e.preventDefault();
 	console.log("setUpAccount e", e);
-	// let inputValue = e.target.elements.walletAddress.value; // get the value of the private key
-	// try {
-	// 	wallet = new ethers.Wallet(privateKey);
-	// } catch (e) {
-	// 	alert("Invalid Private Key");
-	// 	return;
-	// }
-	const wallet = ethers.Wallet.createRandom();
-
-	// Get the wallet's private key and address
-	const privateKey = wallet.privateKey;
-	const address = wallet.address;
+	let inputValue = e.target.elements.walletAddress.value; // get the value of the private key
+	let publicAddress;
+	try {
+		publicAddress = deriveEthereumAddress(privateKey);
+	} catch (e) {
+		alert("Invalid Private Key");
+		return;
+	}
+	
+	const privateKey = inputValue;
+	const address = publicAddress;
 
 	// store the result of the account setup in indexedDB
 	const accountSetUpData = {
@@ -150,7 +150,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 	let container = document.getElementById("extension-content");
 	let footer = document.getElementById("extension-footer");
 
-	// generateHeader(container);
+	generateHeader(container);
 	// navIndex The three states of the extension window are:
 	// 	1		 not logged in
 	// 	2		 logged in, but not activated
@@ -158,7 +158,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 	let account = await checkForExistingAccount();
 	console.log(navIndex, account);
 	if (navIndex === 1) {
-		generateWelcomeScreen(container);
+	generateWelcomeScreen(container);
 	} else if (navIndex === 2) {
 		generateLoggedInScreen(container, account);
 		// dev shit ------------------------------------
