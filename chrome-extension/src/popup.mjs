@@ -1,5 +1,5 @@
 import { ethers } from "../node_modules/ethers/dist/ethers.js";
-import { createProofPayload } from "./api/index.js";
+import { createProofPayload } from "./utils/setup.js";
 import { generateKeyPair } from "./utils/eth.js";
 import { createButton } from "./utils/ui.js";
 
@@ -13,6 +13,7 @@ const EthersProvider = new ethers.JsonRpcProvider(infura_url);
 function testClick() {
 	console.log("clicked");
 }
+// api integrations
 async function createNextId() {
 	// clear container
 	// set loading indicator true
@@ -266,5 +267,12 @@ document.addEventListener("DOMContentLoaded", async function () {
 	// 	3		 active
 	let account = await checkForExistingAccount();
 	console.log(navIndex, account);
-	handleRender(container, navIndex);
+	//handleRender(container, navIndex);
+	container.innerHTML = /* html */ `
+		<button id="test-btn1" >
+			test generateNextID
+		</button>
+	`;
+	let testButton1 = document.getElementById("test-btn1");
+	testButton1.addEventListener("click", () => alert("your mom"));
 });
