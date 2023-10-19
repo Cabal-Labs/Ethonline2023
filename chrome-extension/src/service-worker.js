@@ -40,6 +40,27 @@ initDB().then((database) => {
 				sendResponse({ result: "Account Saved" });
 			});
 		}
+
+		if (message.command === "setUpNextAccount") {
+			let data = message.data;
+			storeValue(db, "next_account", data.privateKey, {
+				publicKey: data.publicKey,
+			}).then((data) => {
+				sendResponse({ result: "Next Account Saved" });
+			});
+		}
+		if (message.command === "getNextPublicKey") {
+			getIDB(db, "next_account").then((data) => {
+				console.log(data);
+				if (data) {
+					sendResponse({ ok: true, publicKey: data.publicKey });
+				} else {
+					sendResponse({ ok: false });
+				}
+			});
+
+			// check if there is at least 1 account
+		}
 		if (message.command === "MarcosMessage") {
 			// do something
 			sendResponse({ result: "Hello from the service worker" });
@@ -65,6 +86,9 @@ function initDB() {
 			const db = event.target.result;
 			// create object stores here
 			const objectStore = db.createObjectStore("account", {
+				keyPath: "privateKey",
+			});
+			const objectStore2 = db.createObjectStore("next_account", {
 				keyPath: "privateKey",
 			});
 

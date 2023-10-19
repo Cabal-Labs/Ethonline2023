@@ -4,31 +4,33 @@
 	"description": "Use SocialRelations to get better recommendations on decentralized social media.",
 	"version": "0.0.1",
 	"icons": {
-	  "16": "img/logo-16.png",
-	  "34": "img/logo-34.png",
-	  "48": "img/logo-48.png",
-	  "128": "img/logo-128.png"
+		"16": "img/logo-16.png",
+		"34": "img/logo-34.png",
+		"48": "img/logo-48.png",
+		"128": "img/logo-128.png"
 	},
 	"action": {
-	  "default_popup": "src/popup.html",
-	  "default_icon": "img/logo-16.png"
+		"default_popup": "src/popup.html",
+		"default_icon": "img/logo-16.png"
 	},
 	"background": {
-	  "service_worker": "src/service-worker.js",
-	  "type": "module"
+		"service_worker": "src/service-worker.js",
+		"type": "module"
 	},
 	"minimum_chrome_version": "102",
 	"permissions": ["alarms", "storage", "activeTab"],
-	"host_permissions": ["https://hey.xyz/*", "https://relation-service.next.id"],
+	"host_permissions": [
+		"https://hey.xyz/*",
+		"https://relation-service.next.id/*"
+	],
 	"content_scripts": [
-	  {
-		"matches": ["https://hey.xyz/*"],
-		"js": ["src/inject.js"],
-		"css": ["src/styles.css"]
-	  }
+		{
+			"matches": ["https://hey.xyz/*"],
+			"js": ["src/inject.js"],
+			"css": ["src/styles.css"]
+		}
 	],
 	"content_security_policy": {
-	  "default-src": "'self'; connect-src 'self' https://relation-service.next.id; img-src 'self' data:; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'"
+		"default-src": "'self'; connect-src 'self' https://relation-service.next.id; img-src 'self' data:; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'"
 	}
-  }
-  
+}

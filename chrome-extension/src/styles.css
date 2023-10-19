@@ -32,13 +32,35 @@
 	display: flex; /* Add this line to make the children of the div align in a column */
 	flex-direction: column; /* Add this line to make the children of the div align in a column */
 }
+#extension-content {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+}
 h1,
 h2,
 h3,
 h4,
 h5,
 h6 {
+	font-family: Rajdhani, Helvetica, sans-serif;
 	margin: 0;
+}
+.page-title {
+	color: #fff;
+	font-family: Rajdhani, Helvetica, sans-serif;
+	font-size: 30px;
+	font-style: normal;
+	font-weight: 700;
+	line-height: normal;
+}
+.page-subtitle {
+	color: #fff;
+	font-family: Rajdhani, Helvetica, sans-serif;
+	font-size: 25px;
+	font-style: normal;
+	font-weight: 300;
+	line-height: normal;
 }
 #extension-body #extension-header h1 {
 	text-shadow: 0px 2px 6px rgba(83, 193, 255, 0.25);
@@ -128,26 +150,35 @@ h6 {
 	transform: translateX(-50%);
 	margin-bottom: 0.5rem;
 }
-
+#private-key-form {
+}
 // Buttons and inputs
-input.private-key-input {
-	display: flex;
-	background-color: transparent;
-	width: 354px;
-	padding: 4px 4px 4px 10px;
-	justify-content: space-between;
-	align-items: center;
-	border-radius: 14px;
-	border: 1px solid rgba(124, 124, 124, 0.4);
-	color: #fff;
-
+.btn {
+	margin: 0;
+	padding: 0;
+	border: none;
+	background: none;
 	font-family: Rajdhani, Helvetica, sans-serif;
 	font-size: 18px;
 	font-style: normal;
 	font-weight: 300;
 	line-height: normal;
+	justify-content: space-between;
+	align-items: center;
+	border-radius: 14px;
+	padding: 8px 12px;
+	display: flex;
 }
-input.private-key-input::placeholder {
+#private-key-input {
+	width: 350px;
+	border: 1px solid rgba(124, 124, 124, 0.4);
+	color: #fff;
+}
+#next-id-btn {
+	background: linear-gradient(180deg, #7774e9 0%, #4834c6 68.85%);
+	color: #fff;
+}
+#private-key-input::placeholder {
 	opacity: 0.5;
 }
 .cabal-btn.primary {

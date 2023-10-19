@@ -1,4 +1,6 @@
 import { ethers } from "../node_modules/ethers/dist/ethers.js";
+import { createProofPayload } from "./api/index.js";
+import { generateKeyPair } from "./utils/eth.js";
 import { createButton } from "./utils/ui.js";
 
 // import ethers from "ethers";
@@ -11,7 +13,47 @@ const EthersProvider = new ethers.JsonRpcProvider(infura_url);
 function testClick() {
 	console.log("clicked");
 }
+async function createNextId() {
+	// clear container
+	// set loading indicator true
+	let result = await generateKeyPair();
+	console.log("next key pair", result);
+	chrome.runtime.sendMessage(
+		{ command: "setUpNextAccount", data: result },
+		(response) => {
+			console.log(response); // Should log "Account Saved"
+			if (response.result === "Account Saved") {
+				// success, render the next screen
+			}
+		}
+	);
+}
+async function saveTwitterHandle(e) {
+	e.preventDefault();
 
+	let twitterHandle = "blah";
+
+	// get from idb
+	let nextPublicKey = "";
+	chrome.runtime.sendMessage({ command: "getNextPublicKey" }, (response) => {
+		console.log(response); // Should log "Account Saved"
+		if (response.ok === true) {
+			// success, render the next screen
+			nextPublicKey = response.nextPublicKey;
+		} else {
+			alert("something went wrong");
+		}
+	});
+
+	let result = await createProofPayload(
+		"twitter",
+		twitterHandle,
+		nextPublicKey
+	);
+	if (result.ok) {
+		// save result
+	}
+}
 function setUpAccount(e) {
 	e.preventDefault();
 	console.log("setUpAccount e", e);
@@ -23,7 +65,7 @@ function setUpAccount(e) {
 		alert("Invalid Private Key");
 		return;
 	}
-	
+
 	const privateKey = inputValue;
 	const address = publicAddress;
 
@@ -39,6 +81,15 @@ function setUpAccount(e) {
 			console.log(response); // Should log "Account Saved"
 		}
 	);
+}
+function logout(e) {
+	chrome.runtime.sendMessage({ command: "clearIDB" }, (response) => {
+		console.log("clearIDB: in popup", response);
+		if (response.result === "database cleared") {
+			alert("Logged Out");
+			generateWelcomeScreen();
+		}
+	});
 }
 function checkForExistingAccount() {
 	return new Promise((resolve, reject) => {
@@ -89,7 +140,8 @@ function generateHeader(header) {
 	nav.appendChild(aboutCabalLink);
 	header.appendChild(nav);
 }
-function generateWelcomeScreen(container) {
+
+function generateWelcomeScreenOld(container) {
 	clearContainer(container);
 	console.log("NAV 1");
 	// Create welcome message
@@ -113,7 +165,38 @@ function generateWelcomeScreen(container) {
 	createButton("Paste Private Key", () => {}, "primary", "submit", container);
 	container.appendChild(form);
 }
-function generateLoggedInScreen(container, account) {
+
+function generateWelcomeScreen(container) {
+	container.innerHTML = /*html*/ `
+		<p style="font-size: 20px; font-family: Radjifani, Helvetica, sans-serif;">Welcome! This extension allows you to manage your Cabal Sorel account. Please enter your wallet's private address below.</p>
+		<form onsubmit="setUpAccount()">
+			<input type="text" id="private-key-input" name="walletAddress" class="private-key-input" style="background-color: transparent; color: #EEE; border: border-radius: 14px;
+			border: 1px solid rgba(124, 124, 124, 0.4); padding: 4px 8px;" placeholder="Enter your wallet's private address here">
+			<button class="cabal-btn primary" type="submit">Paste Private Key</button>
+		</form>
+	`;
+}
+
+function generateNextIDIntegrationScreen(container) {
+	container.innerHTML = /*html*/ `
+		<h3 class="page-title" style="flex:0" >First, Create a Next.ID</h3> 
+		<h6 class="page-subtitle" style="flex:0">It only takes 1 click!</h6>
+		<button class="btn" id="next-id-btn" style="width: 250px">Create Next.ID</button>
+	`;
+	let button = document.getElementById("next-id-btn");
+	button.addEventListener("click", () => createNextId());
+}
+
+function generateConnectTwitterScreen(container) {}
+function generatePostConfirmationTweenScreen(container) {}
+function connectWalletScreen(container, account) {
+	container.innerHTML = /* html */ `
+		<div>Logged in as Address: ${account.address}</div>	
+			<button>Link Twitter</button>
+		<button onclick="logout()" >Logout</button>
+	`;
+}
+function generateLoggedInScreenOld(container, account) {
 	console.log("NAV 2");
 	alert("account found", account.address);
 	// clear the container
@@ -133,34 +216,16 @@ function generateLoggedInScreen(container, account) {
 	//create delete button
 	let deleteAccount = document.createElement("button");
 	deleteAccount.textContent = "Logout";
-	deleteAccount.addEventListener("click", () => {
-		chrome.runtime.sendMessage({ command: "clearIDB" }, (response) => {
-			console.log("clearIDB: in popup", response);
-			if (response.result === "database cleared") {
-				alert("Logged Out");
-				generateWelcomeScreen();
-			}
-		});
-	});
+	deleteAccount.addEventListener("click", () => {});
 	container.appendChild(deleteAccount);
 	// testing ethers & infura integration
 }
-document.addEventListener("DOMContentLoaded", async function () {
-	let loader = document.getElementById("extension-loader");
-	let container = document.getElementById("extension-content");
-	let footer = document.getElementById("extension-footer");
-
+function handleRender(container, navIndex) {
 	generateHeader(container);
-	// navIndex The three states of the extension window are:
-	// 	1		 not logged in
-	// 	2		 logged in, but not activated
-	// 	3		 active
-	let account = await checkForExistingAccount();
-	console.log(navIndex, account);
 	if (navIndex === 1) {
-	generateWelcomeScreen(container);
+		generateNextIDIntegrationScreen(container);
 	} else if (navIndex === 2) {
-		generateLoggedInScreen(container, account);
+		connectWalletScreen(container, account);
 		// dev shit ------------------------------------
 		let printBtn = document.createElement("button");
 		printBtn.textContent = "print idb to console";
@@ -189,4 +254,17 @@ document.addEventListener("DOMContentLoaded", async function () {
 		});
 		// --------------------------------------------------------------------
 	}
+}
+document.addEventListener("DOMContentLoaded", async function () {
+	let loader = document.getElementById("extension-loader");
+	let container = document.getElementById("extension-content");
+	let footer = document.getElementById("extension-footer");
+
+	// navIndex The three states of the extension window are:
+	// 	1		 not logged in
+	// 	2		 logged in, but not activated
+	// 	3		 active
+	let account = await checkForExistingAccount();
+	console.log(navIndex, account);
+	handleRender(container, navIndex);
 });
