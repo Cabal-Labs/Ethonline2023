@@ -1,5 +1,9 @@
 import { findOneIdentityWithSource } from './queries.js';
-import { generateEthereumKeyPair } from './eth.js'
+import { generateKeyPair } from './eth.js'
+
+const PAYLOAD_URL = 'https://proof-service.next.id/v1/proof/payload';
+const PROOF_URL = 'https://proof-service.next.id/v1/proof';
+
 
 async function nextIDCheck(identity) {
     const url = `https://proof-service.next.id/v1/proof?platform=ethereum&identity=${identity}`;
@@ -18,14 +22,68 @@ async function nextIDCheck(identity) {
     }
 }
 
-async function setUpNextID(){
-    const avatar = generateKeyPair();
 
+
+async function createProofPayload(platform, identity, publicKey) {
+    try {
+        const response = await fetch(PAYLOAD_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                action: "create",
+                platform: platform,
+                identity: identity,
+                public_key: publicKey
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error(`Error making request to ${PAYLOAD_URL}:`, error);
+        throw error;
+    }
 }
 
-// Example usage
-// (async () => {
-//     const someIdentity = ""; // Replace with actual identity value
-//     const ids = await hasNextID(someIdentity);
-//     console.log(ids);
-// })();
+async function createProof(proofLocation,platform, identity, publicKey, extra = {}, uuid, createdAt) {
+    try {
+        const response = await fetch(PROOF_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                action: "create",
+                platform: platform,
+                identity: identity,
+                proof_location: proofLocation,
+                public_key: publicKey,
+                extra: extra,
+                uuid: uuid,
+                created_at: createdAt
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error(`Error making request to ${PROOF_URL}:`, error);
+        throw error;
+    }
+}
+
+export {
+    createProofPayload,
+    createProof,
+    nextIDCheck
+};
+
+

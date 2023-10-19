@@ -1,58 +1,373 @@
-
-const GRAPHQL_ENDPOINT = 'https://your-graphql-server.com/graphql';
-
-function findOneIdentityWithSource(platform, identity) {
-    return fetch(GRAPHQL_ENDPOINT, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            // Add any other headers if necessary (e.g., authentication)
-        },
-        body: JSON.stringify({
-            query: `
-            query FindOneIdentityWithSource($platform: String!, $identity: String!) {
-                identity(platform: $platform, identity: $identity) {
+const FIND_ONE_IDENTITY_WITH_SOURCE_QUERY = `
+    query FindOneIdentityWithSource($platform: String!, $identity: String!) {
+        identity(platform: $platform, identity: $identity) {
+            uuid
+            platform
+            identity
+            displayName
+            createdAt
+            addedAt
+            updatedAt
+            neighbor(depth: 5) {
+                sources
+                identity {
                     uuid
                     platform
                     identity
                     displayName
-                    createdAt
-                    addedAt
-                    updatedAt
-                    neighbor(depth: 5) {
-                        sources
-                        identity {
-                            uuid
-                            platform
-                            identity
-                            displayName
-                        }
-                    }
                 }
             }
-            `,
-            variables: {
-                platform,
-                identity,
-            },
-        }),
-    })
-    .then(res => res.json())
-    .then(data => data.data)
-    .catch(error => {
-        console.error("Error fetching data:", error);
-        throw error;
-    });
-}
+        }
+    }
+`;
+
+const FIND_ONE_POST = `
+query Publication ($publicationId: String!) {
+    publication(request: {
+      publicationId: $publicationId
+    }) {
+     __typename 
+      ... on Post {
+        ...PostFields
+      }
+      ... on Comment {
+        ...CommentFields
+      }
+      ... on Mirror {
+        ...MirrorFields
+      }
+    }
+  }
+  
+  fragment MediaFields on Media {
+    url
+    mimeType
+  }
+  
+  fragment ProfileFields on Profile {
+    id
+    name
+    bio
+    attributes {
+      displayType
+      traitType
+      key
+      value
+    }
+    isFollowedByMe
+    isFollowing(who: null)
+    followNftAddress
+    metadata
+    isDefault
+    handle
+    picture {
+      ... on NftImage {
+        contractAddress
+        tokenId
+        uri
+        verified
+      }
+      ... on MediaSet {
+        original {
+          ...MediaFields
+        }
+      }
+    }
+    coverPicture {
+      ... on NftImage {
+        contractAddress
+        tokenId
+        uri
+        verified
+      }
+      ... on MediaSet {
+        original {
+          ...MediaFields
+        }
+      }
+    }
+    ownedBy
+    dispatcher {
+      address
+    }
+    stats {
+      totalFollowers
+      totalFollowing
+      totalPosts
+      totalComments
+      totalMirrors
+      totalPublications
+      totalCollects
+    }
+    followModule {
+      ...FollowModuleFields
+    }
+  }
+  
+  fragment PublicationStatsFields on PublicationStats { 
+    totalAmountOfMirrors
+    totalAmountOfCollects
+    totalAmountOfComments
+    totalUpvotes
+  }
+  
+  fragment MetadataOutputFields on MetadataOutput {
+    name
+    description
+    content
+    media {
+      original {
+        ...MediaFields
+      }
+    }
+    attributes {
+      displayType
+      traitType
+      value
+    }
+  }
+  
+  fragment Erc20Fields on Erc20 {
+    name
+    symbol
+    decimals
+    address
+  }
+  
+  fragment PostFields on Post {
+    id
+    profile {
+      ...ProfileFields
+    }
+    stats {
+      ...PublicationStatsFields
+    }
+    metadata {
+      ...MetadataOutputFields
+    }
+    createdAt
+    collectModule {
+      ...CollectModuleFields
+    }
+    referenceModule {
+      ...ReferenceModuleFields
+    }
+    appId
+    hidden
+    reaction(request: null)
+    mirrors(by: null)
+    hasCollectedByMe
+  }
+  
+  fragment MirrorBaseFields on Mirror {
+    id
+    profile {
+      ...ProfileFields
+    }
+    stats {
+      ...PublicationStatsFields
+    }
+    metadata {
+      ...MetadataOutputFields
+    }
+    createdAt
+    collectModule {
+      ...CollectModuleFields
+    }
+    referenceModule {
+      ...ReferenceModuleFields
+    }
+    appId
+    hidden
+    reaction(request: null)
+    hasCollectedByMe
+  }
+  
+  fragment MirrorFields on Mirror {
+    ...MirrorBaseFields
+    mirrorOf {
+     ... on Post {
+        ...PostFields          
+     }
+     ... on Comment {
+        ...CommentFields          
+     }
+    }
+  }
+  
+  fragment CommentBaseFields on Comment {
+    id
+    profile {
+      ...ProfileFields
+    }
+    stats {
+      ...PublicationStatsFields
+    }
+    metadata {
+      ...MetadataOutputFields
+    }
+    createdAt
+    collectModule {
+      ...CollectModuleFields
+    }
+    referenceModule {
+      ...ReferenceModuleFields
+    }
+    appId
+    hidden
+    reaction(request: null)
+    mirrors(by: null)
+    hasCollectedByMe
+  }
+  
+  fragment CommentFields on Comment {
+    ...CommentBaseFields
+    mainPost {
+      ... on Post {
+        ...PostFields
+      }
+      ... on Mirror {
+        ...MirrorBaseFields
+        mirrorOf {
+          ... on Post {
+             ...PostFields          
+          }
+          ... on Comment {
+             ...CommentMirrorOfFields        
+          }
+        }
+      }
+    }
+  }
+  
+  fragment CommentMirrorOfFields on Comment {
+    ...CommentBaseFields
+    mainPost {
+      ... on Post {
+        ...PostFields
+      }
+      ... on Mirror {
+         ...MirrorBaseFields
+      }
+    }
+  }
+  
+  fragment FollowModuleFields on FollowModule {
+    ... on FeeFollowModuleSettings {
+      type
+      amount {
+        asset {
+          name
+          symbol
+          decimals
+          address
+        }
+        value
+      }
+      recipient
+    }
+    ... on ProfileFollowModuleSettings {
+      type
+      contractAddress
+    }
+    ... on RevertFollowModuleSettings {
+      type
+      contractAddress
+    }
+    ... on UnknownFollowModuleSettings {
+      type
+      contractAddress
+      followModuleReturnData
+    }
+  }
+  
+  fragment CollectModuleFields on CollectModule {
+    __typename
+    ... on FreeCollectModuleSettings {
+      type
+      followerOnly
+      contractAddress
+    }
+    ... on FeeCollectModuleSettings {
+      type
+      amount {
+        asset {
+          ...Erc20Fields
+        }
+        value
+      }
+      recipient
+      referralFee
+    }
+    ... on LimitedFeeCollectModuleSettings {
+      type
+      collectLimit
+      amount {
+        asset {
+          ...Erc20Fields
+        }
+        value
+      }
+      recipient
+      referralFee
+    }
+    ... on LimitedTimedFeeCollectModuleSettings {
+      type
+      collectLimit
+      amount {
+        asset {
+          ...Erc20Fields
+        }
+        value
+      }
+      recipient
+      referralFee
+      endTimestamp
+    }
+    ... on RevertCollectModuleSettings {
+      type
+    }
+    ... on TimedFeeCollectModuleSettings {
+      type
+      amount {
+        asset {
+          ...Erc20Fields
+        }
+        value
+      }
+      recipient
+      referralFee
+      endTimestamp
+    }
+    ... on UnknownCollectModuleSettings {
+      type
+      contractAddress
+      collectModuleReturnData
+    }
+  }
+  
+  fragment ReferenceModuleFields on ReferenceModule {
+    ... on FollowOnlyReferenceModuleSettings {
+      type
+      contractAddress
+    }
+    ... on UnknownReferenceModuleSettings {
+      type
+      contractAddress
+      referenceModuleReturnData
+    }
+    ... on DegreesOfSeparationReferenceModuleSettings {
+      type
+      contractAddress
+      commentsRestricted
+      mirrorsRestricted
+      degreesOfSeparation
+    }
+  }
+  
+`
 
 export {
-    findOneIdentityWithSource
-};
-
-// Exmaple 
-// import { findOneIdentityWithSource } from './queries.js';
-
-// findOneIdentityWithSource('ethereum', '0xc6e2dd45365546bbc865fbf4d74a84f7a1b8ec3d')
-//     .then(result => console.log(JSON.stringify(result, null, 2)))
-//     .catch(error => console.error('Error:', error));
-
+    FIND_ONE_IDENTITY_WITH_SOURCE_QUERY, 
+    FIND_ONE_POST
+}
