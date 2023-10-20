@@ -109,7 +109,7 @@ async function saveEthAddress(e) {
 	if (result.ok) {
 		// save result
 	}
-	const signatures = await doubleSignMessage(nextPrivateKey, walletPrivate, result.sign_payload)
+	
 }
 
 async function connectTwitterAccount(e) {
@@ -172,6 +172,8 @@ async function connectEthAccount(e) {
 	let nextPublicKey = "";
 	let uuid = "";
 	let createdAt = "";
+	let extra = "";
+	let payload ="";
 
 	chrome.runtime.sendMessage({ command: "getNextPublicKey" }, (response) => {
 		console.log(response); // Should log "Account Saved"
@@ -183,12 +185,29 @@ async function connectEthAccount(e) {
 		}
 	});
 
+	chrome.runtime.sendMessage({ command: "getEthPayload" }, (response) => {
+		console.log(response); // Should log "Account Saved"
+		if (response.ok === true) {
+			// success, render the next screen
+			payload = response.ethPayload;
+		} else {
+			alert("something went wrong");
+		}
+	});
+
+
+
+	const signatures = await doubleSignMessage(nextPrivateKey, walletPrivate, payload.sign_payload)
+
 	let result = await createProof(
 		proofLocation,
 		"ethereum",
 		ethAddress,
 		nextPublicKey,
-		(extra = {}),
+		extra={
+			wallet_signature: signatures.walletSignature,
+			signature: signatures.avatarSignature
+		},
 		uuid,
 		createdAt
 	);
@@ -495,57 +514,57 @@ document.addEventListener("DOMContentLoaded", async function () {
 	// if a ... twitter is verified, but no wallet exists -> show them link wallet screen
 	// if a ... wallet exists in account idb -> show them completed account screen / homescreen
 	let next_privateKey;
-	chrome.runtime.sendMessage({ command: "getNextPublicKey" }, (response) => {
-		if (response.ok === true) {
-			next_privateKey = response.nextPublicKey;
-		} else {
-			handleRender(container, 1);
-			return;
-		}
-	});
-	let twitterHandle;
-	if (!!next_privateKey) {
-		chrome.runtime.sendMessage({ command: "getTwitterHandle" }, (response) => {
-			if (response.ok) {
-				twitterHandle = response.twitterHandle;
-			} else {
-				handleRender(container, 2);
-				return;
-			}
-		});
-	}
-	let twitterConfirmationProof;
-	if (!!twitterHandle) {
-		// todo pass private key to this function
-		chrome.runtime.sendMessage(
-			{ command: "getTwitterConfirmationProof", data: { privateKey } },
-			(response) => {
-				if (response.ok) {
-					twitterConfirmationProof = response.twitterConfirmationProof;
-				} else {
-					handleRender(container, 3);
-				}
-			}
-		);
-	}
+	// chrome.runtime.sendMessage({ command: "getNextPublicKey" }, (response) => {
+	// 	if (response.ok === true) {
+	// 		next_privateKey = response.nextPublicKey;
+	// 	} else {
+	// 		handleRender(container, 1);
+	// 		return;
+	// 	}
+	// });
+	// let twitterHandle;
+	// if (!!next_privateKey) {
+	// 	chrome.runtime.sendMessage({ command: "getTwitterHandle" }, (response) => {
+	// 		if (response.ok) {
+	// 			twitterHandle = response.twitterHandle;
+	// 		} else {
+	// 			handleRender(container, 2);
+	// 			return;
+	// 		}
+	// 	});
+	// }
+	// let twitterConfirmationProof;
+	// if (!!twitterHandle) {
+	// 	// todo pass private key to this function
+	// 	chrome.runtime.sendMessage(
+	// 		{ command: "getTwitterConfirmationProof", data: { privateKey } },
+	// 		(response) => {
+	// 			if (response.ok) {
+	// 				twitterConfirmationProof = response.twitterConfirmationProof;
+	// 			} else {
+	// 				handleRender(container, 3);
+	// 			}
+	// 		}
+	// 	);
+	// }
 
-	let walletAddress = "";
-	if (!!twitterConfirmationProof) {
-		// render connect wallet screen
-		// check for a wallet address from the IDB
-		walletAddress = "0x12345";
-		handleRender(container, 4);
-	}
-	if (!!walletAddress) {
-		// they have an account, just show them the home screen
-		handleRender(container, 7);
-	}
+	// let walletAddress = "";
+	// if (!!twitterConfirmationProof) {
+	// 	// render connect wallet screen
+	// 	// check for a wallet address from the IDB
+	// 	walletAddress = "0x12345";
+	// 	handleRender(container, 4);
+	// }
+	// if (!!walletAddress) {
+	// 	// they have an account, just show them the home screen
+	// 	handleRender(container, 7);
+	// }
 	console.log(navIndex, account);
 	// handleRender(container, navIndex);
 	// generateNextIDIntegrationScreen(container);
 	//generateConnectTwitterScreen(container);
 	// generatePostConfirmationTweenScreen(container);
-	// generateImportWallet(container);
+	generateImportWallet(container);
 	// generateProfileScreen(container);
 	//generateHomeScreen(container);
 });
