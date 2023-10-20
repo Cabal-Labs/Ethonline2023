@@ -1,5 +1,5 @@
 import { ethers } from "../node_modules/ethers/dist/ethers.js";
-import { createProofPayload } from "./utils/setup.js";
+import { createProofPayload, createProof } from "./utils/setup.js";
 import { generateKeyPair } from "./utils/eth.js";
 import { createButton } from "./utils/ui.js";
 
@@ -55,6 +55,103 @@ async function saveTwitterHandle(e) {
 		// save result
 	}
 }
+async function saveEthAdress(e) {
+	e.preventDefault();
+
+	let ethAddress = "";
+
+	// get from idb
+	let nextPublicKey = "";
+	chrome.runtime.sendMessage({ command: "getNextPublicKey" }, (response) => {
+		console.log(response); // Should log "Account Saved"
+		if (response.ok === true) {
+			// success, render the next screen
+			nextPublicKey = response.nextPublicKey;
+		} else {
+			alert("something went wrong");
+		}
+	});
+
+	let result = await createProofPayload(
+		"ethreum",
+		ethAddress,
+		nextPublicKey
+	);
+	if (result.ok) {
+		// save result
+	}
+}
+
+async function connectTwitterAccount(e){
+	e.preventDefault();
+
+	let twitterHandle = "blah";
+	let nextPublicKey = "";
+	let uuid = "";
+	let createdAt = "";
+
+	chrome.runtime.sendMessage({ command: "getNextPublicKey" }, (response) => {
+		console.log(response); // Should log "Account Saved"
+		if (response.ok === true) {
+			// success, render the next screen
+			nextPublicKey = response.nextPublicKey;
+		} else {
+			alert("something went wrong");
+		}
+	});
+
+	let result = await createProof(
+		proofLocation,
+		"twitter",
+		twitterHandle,
+		nextPublicKey,
+		extra = {},
+		uuid,
+		createdAt
+
+	);
+	if (result.ok) {
+		// save result
+	}
+}
+
+async function connectEthAccount(e){
+	e.preventDefault();
+
+	let ethAddress= "";
+	let nextPublicKey = "";
+	let uuid = "";
+	let createdAt = "";
+
+	chrome.runtime.sendMessage({ command: "getNextPublicKey" }, (response) => {
+		console.log(response); // Should log "Account Saved"
+		if (response.ok === true) {
+			// success, render the next screen
+			nextPublicKey = response.nextPublicKey;
+		} else {
+			alert("something went wrong");
+		}
+	});
+
+	let result = await createProof(
+		proofLocation,
+		"ethereum",
+		tethAddress,
+		nextPublicKey,
+		extra = {},
+		uuid,
+		createdAt
+
+	);
+	if (result.ok) {
+		// save result
+	}
+}
+
+
+
+
+
 function setUpAccount(e) {
 	e.preventDefault();
 	console.log("setUpAccount e", e);
@@ -66,7 +163,6 @@ function setUpAccount(e) {
 		alert("Invalid Private Key");
 		return;
 	}
-
 	const privateKey = inputValue;
 	const address = publicAddress;
 
