@@ -84,5 +84,11 @@ async function createProof(
 		throw error;
 	}
 }
+function replaceInString(templateString, signature) {
+    return templateString.replace("%SIG_BASE64%", signature);
+}
 
-export { createProofPayload, createProof, nextIDCheck };
+
+
+
+export { createProofPayload, createProof, nextIDCheck, replaceInString};

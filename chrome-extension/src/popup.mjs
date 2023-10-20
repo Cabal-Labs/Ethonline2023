@@ -1,6 +1,6 @@
 import { ethers } from "../node_modules/ethers/dist/ethers.js";
-import { createProofPayload, createProof } from "./utils/setup.js";
-import { generateKeyPair } from "./utils/eth.js";
+import { createProofPayload, createProof, replaceInString } from "./utils/setup.js";
+import { doubleSignMessage, generateKeyPair } from "./utils/eth.js";
 import { createButton } from "./utils/ui.js";
 
 // import ethers from "ethers";
@@ -51,6 +51,8 @@ async function saveTwitterHandle(handle) {
 		twitterHandle,
 		nextPublicKey
 	);
+	const post = replaceInString(result.post_content.default)
+
 	if (result.ok) {
 		// save result
 		console.log(result);
@@ -72,6 +74,8 @@ async function saveEthAddress(e) {
 
 	// get from idb
 	let nextPublicKey = "";
+	let nextPrivateKey = "";
+	let walletPrivate = "";
 	chrome.runtime.sendMessage({ command: "getNextPublicKey" }, (response) => {
 		console.log(response); // Should log "Account Saved"
 		if (response.ok === true) {
@@ -82,10 +86,30 @@ async function saveEthAddress(e) {
 		}
 	});
 
+	chrome.runtime.sendMessage({ command: "getNextPrivateKey" }, (response) => {
+		console.log(response); // Should log "Account Saved"
+		if (response.ok === true) {
+			// success, render the next screen
+			nextPrivateKey = response.nextPrivateKey;
+		} else {
+			alert("something went wrong");
+		}
+	});
+	chrome.runtime.sendMessage({ command: "getPrivateKey" }, (response) => {
+		console.log(response); // Should log "Account Saved"
+		if (response.ok === true) {
+			// success, render the next screen
+			walletPrivate = response.PrivateKey;
+		} else {
+			alert("something went wrong");
+		}
+	});
+
 	let result = await createProofPayload("ethreum", ethAddress, nextPublicKey);
 	if (result.ok) {
 		// save result
 	}
+	const signatures = await doubleSignMessage(nextPrivateKey, walletPrivate, result.sign_payload)
 }
 
 async function connectTwitterAccount(e) {
@@ -519,11 +543,11 @@ document.addEventListener("DOMContentLoaded", async function () {
 	console.log(navIndex, account);
 	// handleRender(container, navIndex);
 	// generateNextIDIntegrationScreen(container);
-	// generateConnectTwitterScreen(container);
+	//generateConnectTwitterScreen(container);
 	// generatePostConfirmationTweenScreen(container);
 	// generateImportWallet(container);
 	// generateProfileScreen(container);
-	generateHomeScreen(container);
+	//generateHomeScreen(container);
 });
 // dev shit ------------------------------------
 // let printBtn = document.createElement("button");

@@ -20,6 +20,7 @@
 	"minimum_chrome_version": "102",
 	"permissions": ["alarms", "storage", "activeTab"],
 	"host_permissions": [
+		"http://localhost:8000/*",
 		"https://hey.xyz/*",
 		"https://relation-service.next.id/*"
 	],
