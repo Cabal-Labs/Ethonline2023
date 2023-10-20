@@ -442,7 +442,6 @@ function generateHomeScreen(container) {
 	});
 }
 function handleRender(container, navIndex) {
-	generateHeader(container);
 	if (navIndex === 0) {
 		generateWelcomeScreen(container);
 	} else if (navIndex === 1) {
@@ -454,8 +453,10 @@ function handleRender(container, navIndex) {
 	} else if (navIndex === 4) {
 		generateImportWallet(container);
 	} else if (navIndex === 5) {
-		generateProfileScreen(container);
+		generateSuccessfulWalletImport(container);
 	} else if (navIndex === 6) {
+		generateProfileScreen(container);
+	} else if (navIndex === 7) {
 		generateHomeScreen(container);
 	} else {
 		container.innerHTML = /* html */ `<div>Error</div>`;
@@ -508,6 +509,12 @@ document.addEventListener("DOMContentLoaded", async function () {
 	if (!!twitterConfirmationProof) {
 		// render connect wallet screen
 		// check for a wallet address from the IDB
+		walletAddress = "0x12345";
+		handleRender(container, 4);
+	}
+	if (!!walletAddress) {
+		// they have an account, just show them the home screen
+		handleRender(container, 7);
 	}
 	console.log(navIndex, account);
 	// handleRender(container, navIndex);
