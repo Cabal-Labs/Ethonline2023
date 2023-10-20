@@ -4,7 +4,11 @@ import { generateKeyPair } from "./utils/eth.js";
 import { createButton } from "./utils/ui.js";
 
 // import ethers from "ethers";
+// navIndex The three states of the extension window are, when the window loads
+// check all stored data and see which state should be rendered first
 let navIndex = 1;
+let loader = document.getElementById("extension-loader");
+let container = document.getElementById("extension-content");
 
 const infura_url =
 	"https://polygon-mumbai.infura.io/v3/d911d6ca657e4fe4ae77ed8b2426dadd";
@@ -29,11 +33,7 @@ async function createNextId() {
 		}
 	);
 }
-async function saveTwitterHandle(e) {
-	e.preventDefault();
-
-	let twitterHandle = "blah";
-
+async function saveTwitterHandle(handle) {
 	// get from idb
 	let nextPublicKey = "";
 	chrome.runtime.sendMessage({ command: "getNextPublicKey" }, (response) => {
@@ -53,9 +53,19 @@ async function saveTwitterHandle(e) {
 	);
 	if (result.ok) {
 		// save result
+		console.log(result);
+		// todo: store the result in a structured way
+		// for now, just store the twitter handle
+		chrome.runtime.sendMessage(
+			{ command: "saveTwitterHandle", data: handle },
+			(response) => {
+				console.log(response);
+			}
+		);
+		generatePostConfirmationTweenScreen(container);
 	}
 }
-async function saveEthAdress(e) {
+async function saveEthAddress(e) {
 	e.preventDefault();
 
 	let ethAddress = "";
@@ -72,17 +82,13 @@ async function saveEthAdress(e) {
 		}
 	});
 
-	let result = await createProofPayload(
-		"ethreum",
-		ethAddress,
-		nextPublicKey
-	);
+	let result = await createProofPayload("ethreum", ethAddress, nextPublicKey);
 	if (result.ok) {
 		// save result
 	}
 }
 
-async function connectTwitterAccount(e){
+async function connectTwitterAccount(e) {
 	e.preventDefault();
 
 	let twitterHandle = "blah";
@@ -105,20 +111,40 @@ async function connectTwitterAccount(e){
 		"twitter",
 		twitterHandle,
 		nextPublicKey,
-		extra = {},
+		(extra = {}),
 		uuid,
 		createdAt
-
 	);
 	if (result.ok) {
 		// save result
+		let nextPrivateKey = "";
+		chrome.runtime.sendMessage({ command: "getNextPublicKey" }, (response) => {
+			if (response.ok === true) {
+				nextPrivateKey = response.nextPublicKey;
+			} else {
+				handleRender(container, 1);
+				return;
+			}
+		});
+		let twitterConfirmationProof = "blah"; //marco
+		chrome.runtime.sendMessage(
+			{
+				command: "saveTwitterConfirmationProof",
+				data: { twitterConfirmationProof, nextPrivateKey },
+			},
+			(response) => {
+				if (response.ok) {
+					console.log(response.result);
+				}
+			}
+		);
 	}
 }
 
-async function connectEthAccount(e){
+async function connectEthAccount(e) {
 	e.preventDefault();
 
-	let ethAddress= "";
+	let ethAddress = "";
 	let nextPublicKey = "";
 	let uuid = "";
 	let createdAt = "";
@@ -136,21 +162,16 @@ async function connectEthAccount(e){
 	let result = await createProof(
 		proofLocation,
 		"ethereum",
-		tethAddress,
+		ethAddress,
 		nextPublicKey,
-		extra = {},
+		(extra = {}),
 		uuid,
 		createdAt
-
 	);
 	if (result.ok) {
 		// save result
 	}
 }
-
-
-
-
 
 function setUpAccount(e) {
 	e.preventDefault();
@@ -212,62 +233,12 @@ function clearContainer(container) {
 		container.removeChild(container.firstChild);
 	}
 }
-function generateHeader(header) {
-	let titleContainer = document.createElement("div");
-	let title = document.createElement("h1");
-	title.textContent = "Cabal Sorel";
-	title.id = "title";
-	let subTitle = document.createElement("h2");
-	subTitle.textContent = "Better Recommendations for Web3";
-	subTitle.id = "subtitle";
-	let line = document.createElement("div");
-	line.id = "accent-line";
-	titleContainer.appendChild(title);
-	titleContainer.appendChild(subTitle);
-	titleContainer.appendChild(line);
-	header.appendChild(titleContainer);
-	let nav = document.createElement("nav");
-	let submissionLink = document.createElement("a");
-	submissionLink.href = "todo";
-	submissionLink.textContent = "Submission";
-	nav.appendChild(submissionLink);
-	let aboutCabalLink = document.createElement("a");
-	aboutCabalLink.textContent = "About Cabal Labs";
-	aboutCabalLink.href = "https://caballabs.com";
-	nav.appendChild(aboutCabalLink);
-	header.appendChild(nav);
-}
-
-function generateWelcomeScreenOld(container) {
-	clearContainer(container);
-	console.log("NAV 1");
-	// Create welcome message
-
-	var welcomeMessage = document.createElement("p");
-	welcomeMessage.textContent =
-		"Welcome! This extension allows you to manage your Cabal Sorel account. Please enter your wallet's private address below.";
-	container.appendChild(welcomeMessage);
-	// create form
-	var form = document.createElement("form");
-	form.addEventListener("submit", setUpAccount);
-	// Create input for wallet's private address
-	var walletInput = document.createElement("input");
-	walletInput.type = "text";
-	walletInput.name = "walletAddress";
-	walletInput.className = "private-key-input";
-	walletInput.placeholder = "Enter your wallet's private address here";
-	form.appendChild(walletInput);
-
-	// Create confirm button
-	createButton("Paste Private Key", () => {}, "primary", "submit", container);
-	container.appendChild(form);
-}
-
+// --------- UI Generation -----------
 function generateWelcomeScreen(container) {
 	container.innerHTML = /*html*/ `
 		<p style="font-size: 20px; font-family: Radjifani, Helvetica, sans-serif;">Welcome! This extension allows you to manage your Cabal Sorel account. Please enter your wallet's private address below.</p>
 		<form onsubmit="setUpAccount()">
-			<input type="text" id="private-key-input" name="walletAddress" class="private-key-input" style="background-color: transparent; color: #EEE; border: border-radius: 14px;
+			<input type="text" id="private-key-input" name="walletAddress" class="clear-input" style="background-color: transparent; color: #EEE; border: border-radius: 14px;
 			border: 1px solid rgba(124, 124, 124, 0.4); padding: 4px 8px;" placeholder="Enter your wallet's private address here">
 			<button class="cabal-btn primary" type="submit">Paste Private Key</button>
 		</form>
@@ -284,8 +255,72 @@ function generateNextIDIntegrationScreen(container) {
 	button.addEventListener("click", () => createNextId());
 }
 
-function generateConnectTwitterScreen(container) {}
-function generatePostConfirmationTweenScreen(container) {}
+function generateConnectTwitterScreen(container) {
+	container.innerHTML = /* html */ `
+	<div class="main-container">
+		<h2 class="title">Enter Your X (twitter) Handle</h2>
+		<form id="twitter-form" action="POST" class="form-container">
+		<p style="font-size:26; color: #FFF; margin:0">@</p>	
+		<input type="text"  placeholder="twitter handle" id="twitter-handle" class="clear-input" />
+		<button id="twitter-clipboard-btn" type="submit" class="cabal-btn primary" aria-label="Paste From Clipboard">
+			<span id="twitter-clipboard-btn-text">Submit</span>
+		</button>
+		</form>
+	</div>
+	`;
+	let input = document.getElementById("twitter-handle");
+	let button = document.getElementById("twitter-clipboard-btn");
+	let form = document.getElementById("twitter-form");
+	input.addEventListener("change", (e) => {
+		console.log(e);
+		if (e.target.value !== "") {
+			button.disabled = false;
+		} else {
+			button.disabled = true;
+		}
+	});
+	form.addEventListener("submit", (e) => {
+		e.preventDefault();
+		console.log(e);
+		let handle = e.target[0].value;
+		if (handle.length === 0) {
+			// handle paste
+			return;
+		} else {
+			// handle submit
+			saveTwitterHandle(handle);
+		}
+	});
+}
+function generatePostConfirmationTweenScreen(container) {
+	let message = "this is a test message";
+	clearContainer(container);
+	container.innerHTML =
+		/*html*/
+		`
+	<div class="main-container twitter-page">
+  		<h2 class="page-title">Ready to get Verified?</h2>
+  		<p class="page-subtitle">Post the following on X (twitter)</p>
+		<div class="tweet-message"> 
+			<p>
+			${message}
+			</p>
+		</div>
+		<button id="twitter-confirm-clipboard-btn" type="button" class="cabal-btn primary" aria-label="Copy Confirmation Message To Clipboard">
+		   <span id="twitter-confirm-clipboard-btn-text">Copy to Clipboard</span>
+		</button>
+		<button class="link">Refresh</button>
+	</div>
+
+	`;
+	let button = document.getElementById("twitter-confirm-clipboard-btn");
+	button.addEventListener("click", () => {
+		// copy the value of the message to the clipboard
+		let saved = navigator.clipboard.writeText(message);
+		console.log(saved);
+		alert("Tweet copied, godspeed 🫡");
+	});
+}
 function connectWalletScreen(container, account) {
 	container.innerHTML = /* html */ `
 		<div>Logged in as Address: ${account.address}</div>	
@@ -293,82 +328,138 @@ function connectWalletScreen(container, account) {
 		<button onclick="logout()" >Logout</button>
 	`;
 }
-function generateLoggedInScreenOld(container, account) {
-	console.log("NAV 2");
-	alert("account found", account.address);
-	// clear the container
-	container.innerHTML = "";
-	// Create public key message
-	var publicKeyMessage = document.createElement("p");
-	publicKeyMessage.textContent = "Logged in as Address: " + account.address;
-	container.appendChild(publicKeyMessage);
-	// todo: show checklist of tasks a user must complete to finish activating their account
-	// todo- brainstorm this
-	// Create activate button
-	var activateButton = document.createElement("button");
-	activateButton.textContent = "Activate";
-	activateButton.addEventListener("click", testClick);
-	container.appendChild(activateButton);
-
-	//create delete button
-	let deleteAccount = document.createElement("button");
-	deleteAccount.textContent = "Logout";
-	deleteAccount.addEventListener("click", () => {});
-	container.appendChild(deleteAccount);
-	// testing ethers & infura integration
+function generateImportWallet(container) {
+	container.innerHTML = /* html */ `
+	<div class="main-container import-wallet">
+  		<h2 class="page-title">Congrats! Your X is Verified</h2>
+  		<p class="page-subtitle">Now the last step, import your wallet</p>
+		<form class="form-container" id="private-key-form">
+			<input type="text" id="private-key-input" name="walletAddress" class="clear-input" placeholder="Enter your wallet's private address here">
+			<button id="import-key-btn" class="cabal-btn primary" type="submit">
+			<span>
+			Paste Private Key
+			</span>
+			</button>
+		</form>
+		<a href="#" class="link">What Happens with My Private Key?</a>
+	</div>
+	`;
+	let input = document.getElementById("private-key-input");
+	let button = document.getElementById("import-key-btn");
+	let form = document.getElementById("private-key-form");
+	input.addEventListener("change", (e) => {
+		console.log(e);
+		if (e.target.value !== "") {
+			button.disabled = false;
+		} else {
+			button.disabled = true;
+		}
+	});
+	form.addEventListener("submit", (e) => {
+		e.preventDefault();
+		console.log(e);
+		let key = e.target[0].value;
+		if (key.length === 0) {
+			// handle paste
+			return;
+		} else {
+			// handle submit
+			saveTwitterHandle(handle);
+		}
+	});
 }
+function generateProfileScreen(container) {}
+function generateHomeScreen(container) {}
 function handleRender(container, navIndex) {
 	generateHeader(container);
-	if (navIndex === 1) {
+	if (navIndex === 0) {
+		generateWelcomeScreen(container);
+	} else if (navIndex === 1) {
 		generateNextIDIntegrationScreen(container);
 	} else if (navIndex === 2) {
-		connectWalletScreen(container, account);
-		// dev shit ------------------------------------
-		let printBtn = document.createElement("button");
-		printBtn.textContent = "print idb to console";
-		printBtn.addEventListener("click", () => {
-			chrome.runtime.sendMessage({ command: "printIDB" }, (response) => {
-				console.log("printIDB: in popup", response.result);
-			});
-		});
-		container.appendChild(printBtn);
-
-		let clearBtn = document.createElement("button");
-		clearBtn.textContent = "Clear IDB";
-		clearBtn.addEventListener("click", () => {
-			chrome.runtime.sendMessage({ command: "clearIDB" }, (response) => {
-				console.log("clearIDB: in popup", response);
-			});
-		});
-		container.appendChild(clearBtn);
-		// ---------------------------------
+		generateConnectTwitterScreen(container);
 	} else if (navIndex === 3) {
-		// testing ethers --------------------------------------------------------
-		EthersProvider.getBlockNumber().then((result) => {
-			let footerText = document.createElement("p");
-			footerText.textContent = "Current Block Number " + result.toString();
-			footer.appendChild(footerText);
-		});
-		// --------------------------------------------------------------------
+		generatePostConfirmationTweenScreen(container);
+	} else if (navIndex === 4) {
+		generateImportWallet(container);
+	} else if (navIndex === 5) {
+		generateProfileScreen(container);
+	} else if (navIndex === 6) {
+		generateHomeScreen(container);
+	} else {
+		container.innerHTML = "<div>Error</div>";
 	}
 }
 document.addEventListener("DOMContentLoaded", async function () {
-	let loader = document.getElementById("extension-loader");
-	let container = document.getElementById("extension-content");
-	let footer = document.getElementById("extension-footer");
-
-	// navIndex The three states of the extension window are:
-	// 	1		 not logged in
-	// 	2		 logged in, but not activated
-	// 	3		 active
 	let account = await checkForExistingAccount();
+	// derive the nav index from the state of the account
+	// if no private key exists in next_account -> show welcome screen
+	// if a private key exists but there is no twitter stored in idb -> show them get twitter handle screen
+	// if a ... a twitter handle is stored but not verified -> show them verify twitter screen
+	// if a ... twitter is verified, but no wallet exists -> show them link wallet screen
+	// if a ... wallet exists in account idb -> show them completed account screen / homescreen
+	let next_privateKey;
+	chrome.runtime.sendMessage({ command: "getNextPublicKey" }, (response) => {
+		if (response.ok === true) {
+			next_privateKey = response.nextPublicKey;
+		} else {
+			handleRender(container, 1);
+			return;
+		}
+	});
+	let twitterHandle;
+	if (!!next_privateKey) {
+		chrome.runtime.sendMessage({ command: "getTwitterHandle" }, (response) => {
+			if (response.ok) {
+				twitterHandle = response.twitterHandle;
+			} else {
+				handleRender(container, 2);
+				return;
+			}
+		});
+	}
+	let twitterConfirmationProof;
+	if (!!twitterHandle) {
+		// todo pass private key to this function
+		chrome.runtime.sendMessage(
+			{ command: "getTwitterConfirmationProof", data: { privateKey } },
+			(response) => {
+				if (response.ok) {
+					twitterConfirmationProof = response.twitterConfirmationProof;
+				}
+			}
+		);
+	}
+
 	console.log(navIndex, account);
-	//handleRender(container, navIndex);
-	container.innerHTML = /* html */ `
-		<button id="test-btn1" >
-			test generateNextID
-		</button>
-	`;
-	let testButton1 = document.getElementById("test-btn1");
-	testButton1.addEventListener("click", () => alert("your mom"));
+	// handleRender(container, navIndex);
+	// generateConnectTwitterScreen(container);
+	// generatePostConfirmationTweenScreen(container);
+	// generateImportWallet(container);
 });
+// dev shit ------------------------------------
+// let printBtn = document.createElement("button");
+// printBtn.textContent = "print idb to console";
+// printBtn.addEventListener("click", () => {
+// 	chrome.runtime.sendMessage({ command: "printIDB" }, (response) => {
+// 		console.log("printIDB: in popup", response.result);
+// 	});
+// });
+// container.appendChild(printBtn);
+
+// let clearBtn = document.createElement("button");
+// clearBtn.textContent = "Clear IDB";
+// clearBtn.addEventListener("click", () => {
+// 	chrome.runtime.sendMessage({ command: "clearIDB" }, (response) => {
+// 		console.log("clearIDB: in popup", response);
+// 	});
+// });
+// container.appendChild(clearBtn);
+// ---------------------------------
+// testing ethers --------------------------------------------------------
+// EthersProvider.getBlockNumber().then((result) => {
+// 	let footerText = document.createElement("p");
+// 	footerText.textContent = "Current Block Number " + result.toString();
+// 	footer.appendChild(footerText);
+// });
+// --------------------------------------------------------------------

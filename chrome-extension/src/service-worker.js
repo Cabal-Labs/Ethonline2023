@@ -49,6 +49,7 @@ initDB().then((database) => {
 				sendResponse({ result: "Next Account Saved" });
 			});
 		}
+
 		if (message.command === "getNextPublicKey") {
 			getIDB(db, "next_account").then((data) => {
 				console.log(data);
@@ -60,6 +61,47 @@ initDB().then((database) => {
 			});
 
 			// check if there is at least 1 account
+		}
+		if (message.command === "saveTwitterHandle") {
+			let data = message.data;
+			storeValue(db, "next_account", data.privateKey, {
+				twitterHandle: data.twitterHandle,
+			}).then((data) => {
+				sendResponse({ result: "Twitter Handle Saved" });
+			});
+		}
+
+		if (message.command === "getTwitterHandle") {
+			getIDB(db, "next_account").then((data) => {
+				console.log(data);
+				if (data) {
+					sendResponse({ ok: true, twitterHandle: data.twitterHandle });
+				} else {
+					sendResponse({ ok: false });
+				}
+			});
+		}
+		if (message.command === "saveTwitterConfirmationProof") {
+			let data = message.data;
+			storeValue(db, "next_account", data.privateKey, {
+				twitterConfirmationProof: data.twitterConfirmationProof,
+			}).then((data) => {
+				sendResponse({ result: "Twitter Confirmation Proof Saved" });
+			});
+		}
+
+		if (message.command === "getTwitterConfirmationProof") {
+			getIDB(db, "next_account").then((data) => {
+				console.log(data);
+				if (data) {
+					sendResponse({
+						ok: true,
+						twitterConfirmationProof: data.twitterConfirmationProof,
+					});
+				} else {
+					sendResponse({ ok: false });
+				}
+			});
 		}
 		if (message.command === "MarcosMessage") {
 			// do something

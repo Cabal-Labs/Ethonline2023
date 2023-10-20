@@ -27,7 +27,11 @@
 		{
 			"matches": ["https://hey.xyz/*"],
 			"js": ["src/inject.js"],
-			"css": ["src/styles.css"]
+			"css": [
+				"src/styles/index.css",
+				"src/styles/component.css",
+				"src/styles/pages.css"
+			]
 		}
 	],
 	"content_security_policy": {

@@ -1,0 +1,40 @@
+.clear-input,
+.clear-input:focus,
+.clear-input:active,
+.clear-input:visited,
+.clear-input:focus-visible {
+	background-color: transparent;
+	border: none;
+	outline: none;
+	font-size: 24px;
+	color: #ffffff80;
+}
+.cabal-btn {
+	cursor: pointer;
+	display: flex;
+	padding: 8.5px 15.5px;
+	justify-content: center;
+	align-items: center;
+	border-radius: 10px;
+	border: none;
+}
+.cabal-btn span {
+	font-family: Rajdhani, Helvetica, sans-serif;
+	font-size: 22px;
+	font-style: normal;
+	font-weight: 500;
+	line-height: normal;
+}
+.cabal-btn.primary {
+	background: linear-gradient(180deg, #adfccd 0%, #34c680 72.92%);
+}
+.cabal-btn.primary span {
+	background: linear-gradient(180deg, #093312 15.63%, #000 80.73%);
+	background-clip: text;
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+}
+button.link {
+	border: none;
+	backgorund: none;
+}

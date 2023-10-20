@@ -1,0 +1,25 @@
+.twitter-page .tweet-message {
+	color: #fff;
+	font-family: Rajdhani, sans-serif;
+	font-size: 22px;
+	font-weight: 300;
+	opacity: 0.5;
+	align-self: stretch;
+	width: 100%;
+	border-radius: 15px;
+	padding: 8px;
+	border: 1px solid rgba(124, 124, 124, 0.4);
+	margin-bottom: 10px;
+}
+.twitter-page .tweet-message p {
+	color: #fff;
+	font-family: Radjhani, sans-serif;
+	font-size: 18px;
+	font-style: normal;
+	font-weight: 300;
+	line-height: normal;
+}
+#twitter-clipboard-btn {
+	float: right;
+	margin-left: auto;
+}
