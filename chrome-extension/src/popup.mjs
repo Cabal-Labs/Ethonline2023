@@ -309,7 +309,7 @@ function generatePostConfirmationTweenScreen(container) {
 		<button id="twitter-confirm-clipboard-btn" type="button" class="cabal-btn primary" aria-label="Copy Confirmation Message To Clipboard">
 		   <span id="twitter-confirm-clipboard-btn-text">Copy to Clipboard</span>
 		</button>
-		<button class="link">Refresh</button>
+		<a class="link">Refresh</a>
 	</div>
 
 	`;
@@ -360,16 +360,87 @@ function generateImportWallet(container) {
 		console.log(e);
 		let key = e.target[0].value;
 		if (key.length === 0) {
-			// handle paste
 			return;
 		} else {
 			// handle submit
-			saveTwitterHandle(handle);
+			saveEthAddress(key);
+			saved = true;
+			if (saved) {
+				clearContainer(container);
+				generateSuccessfulWalletImport(container);
+			}
 		}
 	});
 }
-function generateProfileScreen(container) {}
-function generateHomeScreen(container) {}
+function generateSuccessfulWalletImport(container) {
+	let walletAddress = "0x1234...567"; //todo: fetch public address;
+	container.innerHTML =
+		/* html */
+		`
+	<h1 class="page-title">Congrats! </h1>
+	<h2 class="page-subtitle">Your Wallet Was Imported Successfully</h2>
+	<div id="pfp" ></div>
+	<h3>${walletAddress}</h3>
+	<a id="profile-link">Go to Profile</a>
+	`;
+	let profile = document.getElementById("profile-link");
+	profile.addEventListener("click", () => {
+		clearContainer(container);
+		generateProfileScreen(container);
+	});
+}
+function generateProfileScreen(container) {
+	let walletAddress = "0x1234...567"; //todo: fetch public address;
+	container.innerHTML =
+		/* html */
+		`
+		<div class="profile-sub-header">
+		<div id="pfp" ></div>
+		<h3>${walletAddress}</h3>
+		<a  href="#" id="home-link">Home</a>
+		</div>
+		<div class="profile-grid-item" id="next-id-grid-item">Next Id Connected</div>
+		<div class="profile-grid-item" id="twitter-grid-item">Twitter Connected</div>
+		<div class="profile-grid-item" id="lens-grid-item">Lens Connected</div>
+		<div class="profile-grid-item" id="more-integrations-grid-item">More Integrations</div>
+	`;
+	let home = document.getElementById("home-link");
+	home.addEventListener("click", () => {
+		clearContainer(container);
+		generateHomeScreen(container);
+	});
+}
+function generateHomeScreen(container) {
+	let currentSite = "hey.xyz";
+	let extensionEnabled = false;
+	let walletAddress = "0x1234...5678";
+	container.innerHTML = /*html*/ `
+	<div class="home-sub-header">
+		<div id="pfp" ></div>
+		<h3>${walletAddress}</h3>
+		<a href="#" id="profile-link">Profile</a>
+	</div>
+	<div>Current Site: ${currentSite}</div>
+	<button class="cabal-btn" id="activate-btn">${
+		extensionEnabled ? "Deactivate Extension" : "Activate Extension"
+	}</button>
+	`;
+	let button = document.getElementById("activate-btn");
+	button.addEventListener("click", () => {
+		if (extensionEnabled) {
+			alert("extension disabled");
+			button.innerHTML = "Activate Extension";
+		} else {
+			alert("extension enabled");
+			button.innerHTML = "Deactivate Extension";
+		}
+	});
+	let profile = document.getElementById("profile-link");
+	profile.addEventListener("click", () => {
+		clearContainer(container);
+		generateProfileScreen(container);
+	});
+}
 function handleRender(container, navIndex) {
 	generateHeader(container);
 	if (navIndex === 0) {
@@ -387,7 +458,7 @@ function handleRender(container, navIndex) {
 	} else if (navIndex === 6) {
 		generateHomeScreen(container);
 	} else {
-		container.innerHTML = "<div>Error</div>";
+		container.innerHTML = /* html */ `<div>Error</div>`;
 	}
 }
 document.addEventListener("DOMContentLoaded", async function () {
@@ -426,16 +497,26 @@ document.addEventListener("DOMContentLoaded", async function () {
 			(response) => {
 				if (response.ok) {
 					twitterConfirmationProof = response.twitterConfirmationProof;
+				} else {
+					handleRender(container, 3);
 				}
 			}
 		);
 	}
 
+	let walletAddress = "";
+	if (!!twitterConfirmationProof) {
+		// render connect wallet screen
+		// check for a wallet address from the IDB
+	}
 	console.log(navIndex, account);
 	// handleRender(container, navIndex);
+	// generateNextIDIntegrationScreen(container);
 	// generateConnectTwitterScreen(container);
 	// generatePostConfirmationTweenScreen(container);
 	// generateImportWallet(container);
+	// generateProfileScreen(container);
+	generateHomeScreen(container);
 });
 // dev shit ------------------------------------
 // let printBtn = document.createElement("button");
