@@ -3,3 +3,8 @@ posts.csv
 profiles.csv
 
 key.json
+
+weights
+
+post_model
+user_model
