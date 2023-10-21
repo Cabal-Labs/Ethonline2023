@@ -4,8 +4,13 @@ from pyspark.ml.feature import StringIndexerModel
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import explode, col
 from pyspark.ml.feature import IndexToString
+import os
 
 app = Flask(__name__)
+
+os.environ["JAVA_HOME"] = "/usr/lib/jvm/java-11-openjdk-amd64"
+
+print(os.environ["JAVA_HOME"])
 
 # Initialize Spark Session
 spark = SparkSession.builder.appName("recommend") \
@@ -13,9 +18,11 @@ spark = SparkSession.builder.appName("recommend") \
     .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")\
     .config("spark.sql.catalog.spark_catalog",
             "org.apache.spark.sql.delta.catalog.DeltaCatalog")\
-    .config("spark.executor.memory", "4g") \
-    .config("spark.driver.memory", "4g") \
+    .config("spark.executor.memory", "64g") \
+    .config("spark.driver.memory", "64g") \
     .config("spark.ui.showConsoleProgress", "true") \
+    .config("spark.memory.storageFraction", "0.6") \
+    .config("spark.executor.extraJavaOptions", "-XX:+UseG1GC") \
     .config("spark.sql.legacy.timeParserPolicy", "LEGACY").getOrCreate()
 
 # Load your trained ALS model and StringIndexerModel
@@ -56,18 +63,24 @@ def recommend():
     index_to_string = IndexToString(
         inputCol="postIdIndex", outputCol="originalPostId", labels=post_indexer.labels)
 
+
+
+    print("transforming...")
     # Apply the post_indexer's inverse transformation
     recs_df = index_to_string.transform(recs_df)
 
     print("transformed")
-    recs_df.show()
+    recs_df.show(5)
+    
+    
 
-   # originalPostId_array = recs_df.select(
-  #      "originalPostId").rdd.flatMap(lambda x: x).collect()
-   # print(originalPostId_array)
+    
+    array_from_column = [row['originalPostId'] for row in recs_df.collect()]
+
+
 
     # Convert the DataFrame to JSON and return
-    return recs_df
+    return array_from_column
 
 
 if __name__ == '__main__':
