@@ -10,7 +10,13 @@
 	"author": "",
 	"license": "ISC",
 	"dependencies": {
-		"ethers": "^6.8.0"
+		"crypto": "^1.0.1",
+		"elliptic": "^6.5.4",
+		"ethers": "^6.8.0",
+		"graphql": "^16.8.1",
+		"tiny-secp256k1": "^2.2.3",
+		"uint8array-tools": "^0.0.7",
+		"urql": "^4.0.5"
 	},
 	"devDependencies": {
 		"@babel/core": "^7.23.2",

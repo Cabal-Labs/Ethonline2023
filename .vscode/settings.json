@@ -1,7 +1,8 @@
 {
-    "workbench.colorCustomizations": {
-        "activityBar.background": "#183136",
-        "titleBar.activeBackground": "#21454C",
-        "titleBar.activeForeground": "#F9FCFC"
-    }
+	"workbench.colorCustomizations": {
+		"activityBar.background": "#183136",
+		"titleBar.activeBackground": "#21454C",
+		"titleBar.activeForeground": "#F9FCFC"
+	},
+	"cSpell.words": ["reshare"]
 }
