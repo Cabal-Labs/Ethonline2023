@@ -647,11 +647,11 @@ function handleRender(container, navIndex) {
 document.addEventListener("DOMContentLoaded", async function () {
 	// marco todo: - this function needs to determine which screen to show first based on what is stored in IDB
 	// handleRender(container, navIndex);
-	// generateNextIDIntegrationScreen(container);
+	generateNextIDIntegrationScreen(container);
 	// generateConnectTwitterScreen(container);
 	// generatePostConfirmationTweenScreen(container, "message");
 	// generateImportWallet(container);
-	generateProfileScreen(container);
+	// generateProfileScreen(container);
 	// generateHomeScreen(container);
 	return;
 	let account_exists = await checkForExistingAccount();
