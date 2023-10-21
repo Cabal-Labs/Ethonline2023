@@ -8,15 +8,18 @@ initDB().then((database) => {
 	chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 		// console.log("message", message);
 		// console.log("sender", sender);
+		console.log("responding to message command " + message.command);
 		if (message.command === "printIDB") {
 			getIDB(db, "account").then((data) => {
 				sendResponse({ result: data });
 			});
+			return true;
 		}
 		if (message.command === "clearIDB") {
 			deleteDB().then((data) => {
 				sendResponse({ result: "database cleared" });
 			});
+			return true;
 		}
 		if (message.command === "checkForExistingAccount") {
 			getIDB(db, "account").then((data) => {
@@ -24,9 +27,9 @@ initDB().then((database) => {
 				// parse the json string back into an object
 				let parsed = JSON.parse(data);
 				if (parsed.length > 0) {
-					sendResponse({ result: parsed[0] });
+					sendResponse({ ok: true, result: parsed[0] });
 				} else {
-					sendResponse({ result: "No account found" });
+					sendResponse({ ok: false, result: "No account found" });
 				}
 			});
 			return true;
@@ -34,45 +37,75 @@ initDB().then((database) => {
 		if (message.command === "setUpAccount") {
 			let data = message.data;
 			storeValue(db, "account", data.privateKey, {
-				address: data.address,
+				walletAddress: data.walletAddress,
+				walletPrivateKey: data.walletPrivateKey,
 				//... more to come
 			}).then((data) => {
 				sendResponse({ result: "Account Saved" });
 			});
+			return true;
 		}
 
 		if (message.command === "setUpNextAccount") {
+			console.log("HERE");
 			let data = message.data;
-			storeValue(db, "next_account", data.privateKey, {
+			storeValue(db, "account", data.privateKey, {
 				publicKey: data.publicKey,
-			}).then((data) => {
-				sendResponse({ result: "Next Account Saved" });
-			});
-		}
-
-		if (message.command === "getNextPublicKey") {
-			getIDB(db, "next_account").then((data) => {
-				console.log(data);
-				if (data) {
-					sendResponse({ ok: true, publicKey: data.publicKey });
-				} else {
+			})
+				.then((data) => {
+					console.log(data);
+					if (data) {
+						sendResponse({ ok: true, data });
+					} else {
+						sendResponse({ ok: false });
+					}
+				})
+				.catch((error) => {
+					console.log("Error:", error);
 					sendResponse({ ok: false });
-				}
-			});
-
-			// check if there is at least 1 account
+				});
+			return true;
+		}
+		if (message.command === "getNextAccount") {
+			getIDB(db, "account")
+				.then((data) => {
+					console.log("getNextAccountData: ", data);
+					let parsed = JSON.parse(data);
+					let account = parsed[0];
+					if (account) {
+						let result = {
+							privateKey: account.privateKey,
+							publicKey: account.publicKey,
+						};
+						console.log("sending the response", result);
+						sendResponse({
+							ok: true,
+							data: result,
+						});
+					} else {
+						console.log("No account found");
+						sendResponse({ ok: false });
+					}
+					return true;
+				})
+				.catch((error) => {
+					console.log("Error:", error);
+					sendResponse({ ok: false });
+					return true;
+				});
 		}
 		if (message.command === "saveTwitterHandle") {
 			let data = message.data;
-			storeValue(db, "next_account", data.privateKey, {
+			storeValue(db, "account", data.privateKey, {
 				twitterHandle: data.twitterHandle,
 			}).then((data) => {
 				sendResponse({ result: "Twitter Handle Saved" });
 			});
+			return true;
 		}
 
 		if (message.command === "getTwitterHandle") {
-			getIDB(db, "next_account").then((data) => {
+			getIDB(db, "account").then((data) => {
 				console.log(data);
 				if (data) {
 					sendResponse({ ok: true, twitterHandle: data.twitterHandle });
@@ -80,6 +113,7 @@ initDB().then((database) => {
 					sendResponse({ ok: false });
 				}
 			});
+			return true;
 		}
 		if (message.command === "saveTwitterConfirmationProof") {
 			let data = message.data;
@@ -88,6 +122,7 @@ initDB().then((database) => {
 			}).then((data) => {
 				sendResponse({ result: "Twitter Confirmation Proof Saved" });
 			});
+			return true;
 		}
 
 		if (message.command === "getTwitterConfirmationProof") {
@@ -102,17 +137,18 @@ initDB().then((database) => {
 					sendResponse({ ok: false });
 				}
 			});
-		}
-		if (message.command === "MarcosMessage") {
-			// do something
-			sendResponse({ result: "Hello from the service worker" });
+			return true;
 		} else {
-			sendResponse({ result: "Command not recognized" });
+			sendResponse({
+				result: "Command not recognized",
+				command: message.command,
+			});
+			return true;
 		}
 	});
 });
 
-function initDB() {
+async function initDB() {
 	return new Promise((resolve, reject) => {
 		const request = self.indexedDB.open(DB_NAME, DB_VERSION);
 
@@ -133,35 +169,35 @@ function initDB() {
 			const objectStore2 = db.createObjectStore("next_account", {
 				keyPath: "privateKey",
 			});
-
-			console.log("IndexedDB database upgraded");
 		};
 	});
 }
 async function getIDB(db, storeName) {
 	//get the entire collection of data stored in "db" in the stored with "storeName"
 	// return the result as a json string
-	console.log("db", db);
-	const transaction = db.transaction([storeName], "readonly");
-	const objectStore = transaction.objectStore(storeName);
-	const request = objectStore.getAll();
-
-	return new Promise((resolve, reject) => {
-		request.onsuccess = function (event) {
-			console.log(
-				"Successfully retrieved all data from IndexedDB database:",
-				request.result
-			);
-			resolve(JSON.stringify(request.result));
-		};
-		request.onerror = function (event) {
-			console.error(
-				"Failed to retrieve all data from IndexedDB database",
-				event.target.error
-			);
-			reject(event.target.error);
-		};
-	});
+	try {
+		const transaction = db.transaction([storeName], "readonly");
+		const objectStore = transaction.objectStore(storeName);
+		const request = objectStore.getAll();
+		return new Promise((resolve, reject) => {
+			request.onsuccess = function (event) {
+				console.log(
+					"Successfully retrieved all data from IndexedDB database:",
+					request.result
+				);
+				resolve(JSON.stringify(request.result));
+			};
+			request.onerror = function (event) {
+				console.error(
+					"Failed to retrieve all data from IndexedDB database",
+					event.target.error
+				);
+				reject(event.target.error);
+			};
+		});
+	} catch (err) {
+		return "idb store name does not exist";
+	}
 }
 function storeValue(db, storeName, privateKey, value) {
 	return new Promise((resolve, reject) => {

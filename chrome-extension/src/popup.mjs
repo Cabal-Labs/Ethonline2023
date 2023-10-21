@@ -1,5 +1,9 @@
 import { ethers } from "../node_modules/ethers/dist/ethers.js";
-import { createProofPayload, createProof, replaceInString } from "./utils/setup.js";
+import {
+	createProofPayload,
+	createProof,
+	replaceInString,
+} from "./utils/setup.js";
 import { doubleSignMessage, generateKeyPair } from "./utils/eth.js";
 import { createButton } from "./utils/ui.js";
 
@@ -9,7 +13,8 @@ import { createButton } from "./utils/ui.js";
 let navIndex = 1;
 let loader = document.getElementById("extension-loader");
 let container = document.getElementById("extension-content");
-
+let next_public_key = "";
+let next_private_key = "";
 const infura_url =
 	"https://polygon-mumbai.infura.io/v3/d911d6ca657e4fe4ae77ed8b2426dadd";
 
@@ -22,51 +27,78 @@ async function createNextId() {
 	// clear container
 	// set loading indicator true
 	let result = await generateKeyPair();
+	next_public_key = result.publicKey;
 	console.log("next key pair", result);
-	chrome.runtime.sendMessage(
-		{ command: "setUpNextAccount", data: result },
-		(response) => {
-			console.log(response); // Should log "Account Saved"
-			if (response.result === "Account Saved") {
-				// success, render the next screen
+	if (result) {
+		chrome.runtime.sendMessage(
+			{ command: "setUpNextAccount", data: result },
+			(response) => {
+				console.log("in set up next id", response);
+				if (!!response) {
+					handleRender(container, 2);
+				} else {
+					console.log("blah");
+				}
 			}
-		}
-	);
+		);
+	} else {
+		alert("Next ID Set Up Failed");
+	}
 }
 async function saveTwitterHandle(handle) {
 	// get from idb
+	let nextPrivateKey = "";
 	let nextPublicKey = "";
-	chrome.runtime.sendMessage({ command: "getNextPublicKey" }, (response) => {
-		console.log(response); // Should log "Account Saved"
+	chrome.runtime.sendMessage({ command: "getNextAccount" }, (response) => {
+		console.log("in popupjs", response);
 		if (response.ok === true) {
-			// success, render the next screen
+			console.log("next private key response", response);
+			nextPrivateKey = response.nextPrivateKey;
 			nextPublicKey = response.nextPublicKey;
 		} else {
-			alert("something went wrong");
+			return;
 		}
 	});
-
-	let result = await createProofPayload(
-		"twitter",
-		twitterHandle,
-		nextPublicKey
-	);
-	const post = replaceInString(result.post_content.default)
-
-	if (result.ok) {
-		// save result
-		console.log(result);
-		// todo: store the result in a structured way
-		// for now, just store the twitter handle
-		chrome.runtime.sendMessage(
-			{ command: "saveTwitterHandle", data: handle },
-			(response) => {
-				console.log(response);
-			}
-		);
-		generatePostConfirmationTweenScreen(container);
-	}
+	// console.log(handle);
+	// chrome.runtime.sendMessage(
+	// 	{ command: "getNextAccount" },
+	// 	async (response) => {
+	// 		if (!!response) {
+	// 			// success, render the next screen
+	// 			console.log("in popupjs", response);
+	// 			nextPublicKey = response.publicKey;
+	// 			try {
+	// 				const result = await createProofPayload(
+	// 					"twitter",
+	// 					handle,
+	// 					nextPublicKey
+	// 				);
+	// 				const post = replaceInString(result.post_content.default);
+	// 				console.log(post);
+	// 				if (result.ok) {
+	// 					// save result
+	// 					console.log(result);
+	// 					// todo: store the result in a structured way
+	// 					// for now, just store the twitter handle
+	// 					chrome.runtime.sendMessage(
+	// 						{ command: "saveTwitterHandle", data: handle },
+	// 						(response) => {
+	// 							console.log("twitter save response ", response);
+	// 						}
+	// 					);
+	// 					clearContainer(container);
+	// 					generatePostConfirmationTweenScreen(container, post);
+	// 				}
+	// 			} catch (err) {
+	// 				console.log("Error creating proof payload: ", err);
+	// 			}
+	// 		} else {
+	// 			alert("something went wrong retrieving your next.id account");
+	// 		}
+	// 	}
+	// );
 }
+
 async function saveEthAddress(e) {
 	e.preventDefault();
 
@@ -109,7 +141,6 @@ async function saveEthAddress(e) {
 	if (result.ok) {
 		// save result
 	}
-	
 }
 
 async function connectTwitterAccount(e) {
@@ -173,7 +204,7 @@ async function connectEthAccount(e) {
 	let uuid = "";
 	let createdAt = "";
 	let extra = "";
-	let payload ="";
+	let payload = "";
 
 	chrome.runtime.sendMessage({ command: "getNextPublicKey" }, (response) => {
 		console.log(response); // Should log "Account Saved"
@@ -195,19 +226,21 @@ async function connectEthAccount(e) {
 		}
 	});
 
-
-
-	const signatures = await doubleSignMessage(nextPrivateKey, walletPrivate, payload.sign_payload)
+	const signatures = await doubleSignMessage(
+		nextPrivateKey,
+		walletPrivate,
+		payload.sign_payload
+	);
 
 	let result = await createProof(
 		proofLocation,
 		"ethereum",
 		ethAddress,
 		nextPublicKey,
-		extra={
+		(extra = {
 			wallet_signature: signatures.walletSignature,
-			signature: signatures.avatarSignature
-		},
+			signature: signatures.avatarSignature,
+		}),
 		uuid,
 		createdAt
 	);
@@ -232,10 +265,10 @@ function setUpAccount(e) {
 
 	// store the result of the account setup in indexedDB
 	const accountSetUpData = {
-		privateKey,
-		address,
+		walletPrivateKey: privateKey,
+		walletAddress: address,
 	};
-	console.log(accountSetUpData);
+	let nextPrivateKey = console.log(accountSetUpData);
 	chrome.runtime.sendMessage(
 		{ command: "setUpAccount", data: accountSetUpData },
 		(response) => {
@@ -243,7 +276,7 @@ function setUpAccount(e) {
 		}
 	);
 }
-function logout(e) {
+export function logout(e) {
 	chrome.runtime.sendMessage({ command: "clearIDB" }, (response) => {
 		console.log("clearIDB: in popup", response);
 		if (response.result === "database cleared") {
@@ -270,6 +303,11 @@ function checkForExistingAccount() {
 		);
 	});
 }
+function printIDB() {
+	chrome.runtime.sendMessage({ command: "printIDB" }, (response) => {
+		console.log("printIDB: in popup", response.result);
+	});
+}
 function clearContainer(container) {
 	// this function accepts a div and removes all children dom elements from it
 	while (container.firstChild) {
@@ -280,12 +318,13 @@ function clearContainer(container) {
 function generateWelcomeScreen(container) {
 	container.innerHTML = /*html*/ `
 		<p style="font-size: 20px; font-family: Radjifani, Helvetica, sans-serif;">Welcome! This extension allows you to manage your Cabal Sorel account. Please enter your wallet's private address below.</p>
-		<form onsubmit="setUpAccount()">
-			<input type="text" id="private-key-input" name="walletAddress" class="clear-input" style="background-color: transparent; color: #EEE; border: border-radius: 14px;
-			border: 1px solid rgba(124, 124, 124, 0.4); padding: 4px 8px;" placeholder="Enter your wallet's private address here">
-			<button class="cabal-btn primary" type="submit">Paste Private Key</button>
-		</form>
+		<button id="get-started-btn" class="cabal-btn primary">Get Started</button>
 	`;
+	let button = document.getElementById("get-started-btn");
+	button.addEventListener("click", () => {
+		clearContainer(container);
+		handleRender(container, 1);
+	});
 }
 
 function generateNextIDIntegrationScreen(container) {
@@ -322,25 +361,25 @@ function generateConnectTwitterScreen(container) {
 			button.disabled = true;
 		}
 	});
-	form.addEventListener("submit", (e) => {
+	form.addEventListener("submit", async (e) => {
+		// todo set up loading states here
 		e.preventDefault();
 		console.log(e);
 		let handle = e.target[0].value;
 		if (handle.length === 0) {
-			// handle paste
-			return;
+			alert("please provide a twitter handle");
 		} else {
 			// handle submit
-			saveTwitterHandle(handle);
+			await saveTwitterHandle(handle);
 		}
 	});
 }
-function generatePostConfirmationTweenScreen(container) {
-	let message = "this is a test message";
+function generatePostConfirmationTweenScreen(container, message) {
 	clearContainer(container);
-	container.innerHTML =
-		/*html*/
-		`
+	if (message)
+		container.innerHTML =
+			/*html*/
+			`
 	<div class="main-container twitter-page">
   		<h2 class="page-title">Ready to get Verified?</h2>
   		<p class="page-subtitle">Post the following on X (twitter)</p>
@@ -464,6 +503,16 @@ function generateHomeScreen(container) {
 		<a href="#" id="profile-link">Profile</a>
 	</div>
 	<div>Current Site: ${currentSite}</div>
+	<div class="integration-container">
+		<div class="integration-square" id="nextid">
+		<span>Next.ID</span>
+		</div>
+		<div class="integration-square" id="twitter"></div>
+		<div class="integration-square" id="lens"></div>
+	</div>
+ 	<div id="more-integrations">
+		<span>More Integrations</span>
+	</div>
 	<button class="cabal-btn" id="activate-btn">${
 		extensionEnabled ? "Deactivate Extension" : "Activate Extension"
 	}</button>
@@ -485,6 +534,8 @@ function generateHomeScreen(container) {
 	});
 }
 function handleRender(container, navIndex) {
+	console.log("rendering", navIndex);
+	clearContainer(container);
 	if (navIndex === 0) {
 		generateWelcomeScreen(container);
 	} else if (navIndex === 1) {
@@ -492,7 +543,10 @@ function handleRender(container, navIndex) {
 	} else if (navIndex === 2) {
 		generateConnectTwitterScreen(container);
 	} else if (navIndex === 3) {
-		generatePostConfirmationTweenScreen(container);
+		generatePostConfirmationTweenScreen(
+			container,
+			"you don't need to post any tweets rn"
+		);
 	} else if (navIndex === 4) {
 		generateImportWallet(container);
 	} else if (navIndex === 5) {
@@ -506,33 +560,45 @@ function handleRender(container, navIndex) {
 	}
 }
 document.addEventListener("DOMContentLoaded", async function () {
-	let account = await checkForExistingAccount();
+	generateHomeScreen(container);
+	return;
+	let account_exists = await checkForExistingAccount();
+	console.log(account_exists);
+
 	// derive the nav index from the state of the account
 	// if no private key exists in next_account -> show welcome screen
 	// if a private key exists but there is no twitter stored in idb -> show them get twitter handle screen
 	// if a ... a twitter handle is stored but not verified -> show them verify twitter screen
 	// if a ... twitter is verified, but no wallet exists -> show them link wallet screen
-	// if a ... wallet exists in account idb -> show them completed account screen / homescreen
-	let next_privateKey;
-	// chrome.runtime.sendMessage({ command: "getNextPublicKey" }, (response) => {
-	// 	if (response.ok === true) {
-	// 		next_privateKey = response.nextPublicKey;
-	// 	} else {
-	// 		handleRender(container, 1);
-	// 		return;
-	// 	}
-	// });
-	// let twitterHandle;
-	// if (!!next_privateKey) {
-	// 	chrome.runtime.sendMessage({ command: "getTwitterHandle" }, (response) => {
-	// 		if (response.ok) {
-	// 			twitterHandle = response.twitterHandle;
-	// 		} else {
-	// 			handleRender(container, 2);
-	// 			return;
-	// 		}
-	// 	});
-	// }
+	// if a ... wallet exists in account idb -> show them completed account screen / home screen
+	if (!account_exists) {
+		handleRender(container, 0);
+		return;
+	}
+	let nextPrivateKey = next_private_key;
+	chrome.runtime.sendMessage({ command: "getNextAccount" }, (response) => {
+		console.log(response);
+		if (response.ok === true) {
+			console.log("next private key response", response);
+			nextPrivateKey = response.nextPrivateKey;
+			next_private_key = response.nextPrivateKey;
+		} else {
+			handleRender(container, 1);
+			return;
+		}
+	});
+	console.log(nextPrivateKey);
+	let twitterHandle;
+	if (!!next_privateKey) {
+		chrome.runtime.sendMessage({ command: "getTwitterHandle" }, (response) => {
+			if (response.ok) {
+				twitterHandle = response.twitterHandle;
+			} else {
+				handleRender(container, 2);
+				return;
+			}
+		});
+	}
 	// let twitterConfirmationProof;
 	// if (!!twitterHandle) {
 	// 	// todo pass private key to this function
@@ -559,15 +625,18 @@ document.addEventListener("DOMContentLoaded", async function () {
 	// 	// they have an account, just show them the home screen
 	// 	handleRender(container, 7);
 	// }
-	console.log(navIndex, account);
 	// handleRender(container, navIndex);
 	// generateNextIDIntegrationScreen(container);
 	//generateConnectTwitterScreen(container);
 	// generatePostConfirmationTweenScreen(container);
-	generateImportWallet(container);
+	// generateImportWallet(container);
 	// generateProfileScreen(container);
 	//generateHomeScreen(container);
 });
+let logoutButton = document.getElementById("log-out-btn");
+logoutButton.addEventListener("click", logout);
+let printButton = document.getElementById("print-btn");
+printButton.addEventListener("click", printIDB);
 // dev shit ------------------------------------
 // let printBtn = document.createElement("button");
 // printBtn.textContent = "print idb to console";

@@ -23,6 +23,7 @@ async function nextIDCheck(identity) {
 
 async function createProofPayload(platform, identity, publicKey) {
 	try {
+		console.log(platform, identity, publicKey);
 		const response = await fetch(PAYLOAD_URL, {
 			method: "POST",
 			headers: {
@@ -85,10 +86,7 @@ async function createProof(
 	}
 }
 function replaceInString(templateString, signature) {
-    return templateString.replace("%SIG_BASE64%", signature);
+	return templateString.replace("%SIG_BASE64%", signature);
 }
 
-
-
-
-export { createProofPayload, createProof, nextIDCheck, replaceInString};
+export { createProofPayload, createProof, nextIDCheck, replaceInString };

@@ -189,11 +189,21 @@ h6 {
 
 /* inject */
 #cabal-sorel-button {
-	z-index: 1000;
-	background-color: red;
-	position: fixed;
-	top: 10px;
-	left: 10px;
+	display: inline-flex;
+	padding: 8px 18px;
+	justify-content: center;
+	align-items: center;
+	gap: 10px;
+	border-radius: 5px;
+	background: #d4ffcd;
+}
+#cabal-sorel-button > span {
+	color: #148734;
+	font-family: Rajdhani, Helvetica, sans-serif;
+	font-size: 14px;
+	font-style: normal;
+	font-weight: 400;
+	line-height: normal;
 }
 // twitter handle screen
 .main-container {
