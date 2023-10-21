@@ -1,3 +1,5 @@
+import { signMessage } from "./eth.mjs";
+
 const PAYLOAD_URL = "https://proof-service.next.id/v1/proof/payload";
 const PROOF_URL = "https://proof-service.next.id/v1/proof";
 
@@ -85,8 +87,11 @@ async function createProof(
 		throw error;
 	}
 }
-function replaceInString(templateString, signature) {
-	return templateString.replace("%SIG_BASE64%", signature);
+async function generateTweetMessage(proofResult, privateKey) {
+	const signature = await signMessage(privateKey, proofResult.sign_payload);
+	let templateString = proofResult.post_content.default;
+	let post = templateString.replace("%SIG_BASE64%", signature.avatarSignature);
+	return post;
 }
 
-export { createProofPayload, createProof, nextIDCheck, replaceInString };
+export { createProofPayload, createProof, nextIDCheck, generateTweetMessage };

@@ -36,7 +36,7 @@ initDB().then((database) => {
 		}
 		if (message.command === "setUpAccount") {
 			let data = message.data;
-			storeValue(db, "account", data.privateKey, {
+			storeValue(db, "account", data.nextPublicKey, {
 				walletAddress: data.walletAddress,
 				walletPrivateKey: data.walletPrivateKey,
 				//... more to come
@@ -49,8 +49,8 @@ initDB().then((database) => {
 		if (message.command === "setUpNextAccount") {
 			console.log("HERE");
 			let data = message.data;
-			storeValue(db, "account", data.privateKey, {
-				publicKey: data.publicKey,
+			storeValue(db, "account", data.publicKey, {
+				privateKey: data.privateKey,
 			})
 				.then((data) => {
 					console.log(data);
@@ -67,57 +67,43 @@ initDB().then((database) => {
 			return true;
 		}
 		if (message.command === "getNextAccount") {
-			getIDB(db, "account")
-				.then((data) => {
-					console.log("getNextAccountData: ", data);
-					let parsed = JSON.parse(data);
-					let account = parsed[0];
-					if (account) {
-						let result = {
-							privateKey: account.privateKey,
-							publicKey: account.publicKey,
-						};
-						console.log("sending the response", result);
-						sendResponse({
-							ok: true,
-							data: result,
-						});
-					} else {
-						console.log("No account found");
-						sendResponse({ ok: false });
-					}
-					return true;
-				})
-				.catch((error) => {
-					console.log("Error:", error);
-					sendResponse({ ok: false });
-					return true;
-				});
+			let data = message.data;
+			console.log("get next account data", data);
+			getValue(db, "account", data.publicKey).then((data) => {
+				console.log("data in sw", data);
+				sendResponse({ ok: true, data });
+			});
+			return true;
 		}
 		if (message.command === "saveTwitterHandle") {
 			let data = message.data;
-			storeValue(db, "account", data.privateKey, {
-				twitterHandle: data.twitterHandle,
+			updateRecord(db, "account", data.publicKey, {
+				twitter_handle: data.twitter_handle,
+				twitter_uuid: data.twitter_uuid,
+				twitter_createdAt: data.twitter_createdAt,
 			}).then((data) => {
-				sendResponse({ result: "Twitter Handle Saved" });
+				sendResponse({ ok: true, result: "Twitter Handle Saved" });
 			});
 			return true;
 		}
 
 		if (message.command === "getTwitterHandle") {
-			getIDB(db, "account").then((data) => {
+			getValue(db, "account", data.id).then((data) => {
 				console.log(data);
-				if (data) {
-					sendResponse({ ok: true, twitterHandle: data.twitterHandle });
-				} else {
-					sendResponse({ ok: false });
-				}
 			});
+			// getIDB(db, "account").then((data) => {
+			// 	console.log(data);
+			// 	if (data) {
+			// 		sendResponse({ ok: true, twitterHandle: data.twitterHandle });
+			// 	} else {
+			// 		sendResponse({ ok: false });
+			// 	}
+			// });
 			return true;
 		}
 		if (message.command === "saveTwitterConfirmationProof") {
 			let data = message.data;
-			storeValue(db, "next_account", data.privateKey, {
+			storeValue(db, "account", data.privateKey, {
 				twitterConfirmationProof: data.twitterConfirmationProof,
 			}).then((data) => {
 				sendResponse({ result: "Twitter Confirmation Proof Saved" });
@@ -126,7 +112,7 @@ initDB().then((database) => {
 		}
 
 		if (message.command === "getTwitterConfirmationProof") {
-			getIDB(db, "next_account").then((data) => {
+			getIDB(db, "account").then((data) => {
 				console.log(data);
 				if (data) {
 					sendResponse({
@@ -164,10 +150,7 @@ async function initDB() {
 			const db = event.target.result;
 			// create object stores here
 			const objectStore = db.createObjectStore("account", {
-				keyPath: "privateKey",
-			});
-			const objectStore2 = db.createObjectStore("next_account", {
-				keyPath: "privateKey",
+				keyPath: "publicKey",
 			});
 		};
 	});
@@ -199,11 +182,11 @@ async function getIDB(db, storeName) {
 		return "idb store name does not exist";
 	}
 }
-function storeValue(db, storeName, privateKey, value) {
+function storeValue(db, storeName, publicKey, value) {
 	return new Promise((resolve, reject) => {
 		const transaction = db.transaction([storeName], "readwrite");
 		const objectStore = transaction.objectStore(storeName);
-		const request = objectStore.add({ privateKey, ...value });
+		const request = objectStore.add({ publicKey, ...value });
 
 		request.onsuccess = function (event) {
 			console.log("Successfully stored data in IndexedDB database");
@@ -225,15 +208,42 @@ function getValue(db, storeName, id) {
 		const request = objectStore.get(id);
 
 		request.onsuccess = function (event) {
-			console.log(
-				"Successfully retrieved data from IndexedDB database:",
-				request.result.value
-			);
-			resolve(request.result.value);
+			if (request.result) {
+				console.log(
+					"Successfully retrieved data from IndexedDB database:",
+					request.result
+				);
+				resolve(request.result);
+			} else {
+				console.log(
+					"No data found in IndexedDB database for the provided key:",
+					id
+				);
+				resolve(undefined);
+			}
 		};
 		request.onerror = function (event) {
 			console.error(
 				"Failed to retrieve data from IndexedDB database",
+				event.target.error
+			);
+			reject(event.target.error);
+		};
+	});
+}
+function updateRecord(db, storeName, key, value) {
+	return new Promise((resolve, reject) => {
+		const transaction = db.transaction([storeName], "readwrite");
+		const objectStore = transaction.objectStore(storeName);
+		const request = objectStore.put({ ...value, publicKey: key });
+
+		request.onsuccess = function (event) {
+			console.log("Successfully updated data in IndexedDB database");
+			resolve(request.result);
+		};
+		request.onerror = function (event) {
+			console.error(
+				"Failed to update data in IndexedDB database",
 				event.target.error
 			);
 			reject(event.target.error);

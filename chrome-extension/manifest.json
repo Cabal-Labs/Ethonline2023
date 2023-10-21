@@ -22,7 +22,8 @@
 	"host_permissions": [
 		"http://localhost:8000/*",
 		"https://hey.xyz/*",
-		"https://relation-service.next.id/*"
+		"https://relation-service.next.id/*",
+		"https://proof-service.next.id/v1/proof/payload/*"
 	],
 	"content_scripts": [
 		{

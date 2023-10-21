@@ -96,7 +96,7 @@ async function getRecommendedPosts() {
 		return new Promise((resolve, reject) => {
 			setTimeout(() => {
 				resolve(samplePosts);
-			}, Math.random() * 2000);
+			}, Math.random() * 1000);
 		});
 	} else {
 		try {
@@ -237,6 +237,13 @@ async function injectRecommendedPosts(container) {
 		resharesElement.textContent = post.reshares;
 		likeElement.textContent = post.likes;
 		savedElement.textContent = post.saves;
+
+		// Add a custom event listener to a button inside the template with an aria-label of 'like'
+		let likeButton = newPost.querySelector("[aria-label='like']");
+		likeButton.addEventListener("click", function () {
+			console.log("Like button clicked");
+		});
+
 		container.appendChild(newPost);
 	});
 }
