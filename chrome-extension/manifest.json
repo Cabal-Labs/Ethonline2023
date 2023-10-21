@@ -17,16 +17,26 @@
 		"service_worker": "src/service-worker.js",
 		"type": "module"
 	},
-
 	"minimum_chrome_version": "102",
-
 	"permissions": ["alarms", "storage", "activeTab"],
-	"host_permissions": ["https://hey.xyz/*"],
+	"host_permissions": [
+		"http://localhost:8000/*",
+		"https://hey.xyz/*",
+		"https://relation-service.next.id/*",
+		"https://proof-service.next.id/v1/proof/payload/*"
+	],
 	"content_scripts": [
 		{
 			"matches": ["https://hey.xyz/*"],
 			"js": ["src/inject.js"],
-			"css": ["src/styles.css"]
+			"css": [
+				"src/styles/index.css",
+				"src/styles/component.css",
+				"src/styles/pages.css"
+			]
 		}
-	]
+	],
+	"content_security_policy": {
+		"default-src": "'self'; connect-src 'self' https://relation-service.next.id; img-src 'self' data:; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'"
+	}
 }

@@ -3,8 +3,16 @@
 		<meta charset="utf-8" />
 		<title>Cabal Sorel</title>
 		<script src="../node_modules/ethers/dist/ethers.min.js"></script>
-		<link rel="stylesheet" href="styles.css" />
 		<script type="module" src="popup.mjs"></script>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&display=swap"
+			rel="stylesheet"
+		/>
+		<link rel="stylesheet" href="styles/index.css" />
+		<link rel="stylesheet" href="styles/component.css" />
+		<link rel="stylesheet" href="styles/pages.css" />
 	</head>
 	<body id="extension-body">
 		<div id="extension-header">
@@ -20,6 +28,9 @@
 		</div>
 		<div id="extension-loader" style="display: none">Loading...</div>
 		<div id="extension-content"></div>
-		<footer id="extension-footer"></footer>
+		<footer id="extension-footer">
+			<button id="log-out-btn">Clear IDB</button>
+			<button id="print-btn">Print IDB</button>
+		</footer>
 	</body>
 </html>
