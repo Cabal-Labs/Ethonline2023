@@ -183,7 +183,8 @@ async function connectTwitterAccount(proofLocation) {
 	// 	account.twitter_uuid,
 	// 	account.twitter_createdAt
 	// );
-	if (!!account) {
+	// marco todo - test the actual integration for the stuff inside this branch
+	if (false) {
 		// save result
 		let nextPrivateKey = "";
 		chrome.runtime.sendMessage({ command: "getNextPublicKey" }, (response) => {
@@ -330,8 +331,13 @@ function clearContainer(container) {
 // --------- UI Generation -----------
 function generateWelcomeScreen(container) {
 	container.innerHTML = /*html*/ `
-		<p style="font-size: 20px; font-family: Radjifani, Helvetica, sans-serif;">Welcome! This extension allows you to manage your Cabal Sorel account. Please enter your wallet's private address below.</p>
-		<button id="get-started-btn" class="cabal-btn primary">Get Started</button>
+		<h1 class="page-title">Welcome!</h1>
+		<h2 class="page-subtitle" style="padding-bottom: 20px;">This extension give you better recommendations for web3 socials sites.</h2>
+		<button id="get-started-btn" class="cabal-btn primary">
+			<span>
+				Get Started
+			</span>
+		</button>
 	`;
 	let button = document.getElementById("get-started-btn");
 	button.addEventListener("click", () => {
@@ -342,9 +348,9 @@ function generateWelcomeScreen(container) {
 
 function generateNextIDIntegrationScreen(container) {
 	container.innerHTML = /*html*/ `
-		<h3 class="page-title" style="flex:0" >First, Create a Next.ID</h3> 
-		<h6 class="page-subtitle" style="flex:0">It only takes 1 click!</h6>
-		<button class="btn" id="next-id-btn" style="width: 250px">Create Next.ID</button>
+		<h1 class="page-title">First, Create a Next.ID</h1> 
+		<h2 class="page-subtitle" style="padding-bottom: 20px;" >It only takes 1 click!</h2>
+		<button class="cabal-btn" id="next-id-btn"><span>Create Next.ID</span></button>
 	`;
 	let button = document.getElementById("next-id-btn");
 	button.addEventListener("click", () => createNextId());
@@ -399,10 +405,13 @@ function generatePostConfirmationTweenScreen(container, message) {
 			${message}
 			</p>
 		</div>
-		<button id="twitter-confirm-clipboard-btn" type="button" class="cabal-btn primary" aria-label="Copy Confirmation Message To Clipboard">
-		   <span id="twitter-confirm-clipboard-btn-text">Copy to Clipboard</span>
+		<div style="display:flex; justify-content:space-between">
+
+		<button  id="twitter-confirm-clipboard-btn" type="button" class="cabal-btn primary" aria-label="Copy Confirmation Message To Clipboard">
+		   <span id="twitter-confirm-clipboard-btn-text">Copy to Clipboard</span>											
 		</button>
-		<a class="link" id="just-posted">Ok, I just posted</a>
+		<a class="link" id="just-posted"><span>Ok, I just posted</span></a>
+	</div>
 	</div>
 
 	`;
@@ -487,7 +496,7 @@ function generateImportWallet(container) {
 			<input type="text" id="private-key-input" name="walletAddress" class="clear-input" placeholder="Enter your wallet's private address here">
 			<button id="import-key-btn" class="cabal-btn primary" type="submit">
 			<span>
-			Paste Private Key
+			Import
 			</span>
 			</button>
 		</form>
@@ -539,56 +548,20 @@ function generateSuccessfulWalletImport(container) {
 		generateProfileScreen(container);
 	});
 }
-function generateProfileScreen(container) {
+function generateHomeScreen(container) {
 	let walletAddress = "0x1234...567"; //todo: fetch public address;
+	let extensionEnabled = false;
 	container.innerHTML =
 		/* html */
 		`
+		<a  href="#" id="profile-link">My Profile</a>
 		<div class="profile-sub-header">
 		<div id="pfp" ></div>
 		<h3>${walletAddress}</h3>
-		<a  href="#" id="home-link">Home</a>
 		</div>
-		<div class="profile-grid-item" id="next-id-grid-item">Next Id Connected</div>
-		<div class="profile-grid-item" id="twitter-grid-item">Twitter Connected</div>
-		<div class="profile-grid-item" id="lens-grid-item">Lens Connected</div>
-		<div class="profile-grid-item" id="more-integrations-grid-item">More Integrations</div>
-	`;
-	let home = document.getElementById("home-link");
-	home.addEventListener("click", () => {
-		clearContainer(container);
-		generateHomeScreen(container);
-	});
-}
-function generateHomeScreen(container) {
-	let currentSite = "hey.xyz";
-	let extensionEnabled = false;
-	let walletAddress = "0x1234...5678";
-	container.innerHTML = /*html*/ `
-	<div class="home-sub-header" style="display: flex;align-items:center; flex-direction: row; justify-content: flex-start">
-		<div id="pfp"></div>
-		<div>
-		<h3>${walletAddress}</h3>
-		<div>Current Site: ${currentSite}</div>
-		</div>
-		<a href="#" id="profile-link">Profile</a>
-	</div>
-	<div class="integration-container">
-		<div class="integration-square" id="nextid">
-		<span class="title">Next.ID</span>
-		</div>
-		<div class="integration-square" id="twitter">
-		<span class="title">Twitter</span>
-		</div>
-		<div class="integration-square" id="lens">
-		<span class="title">Lens</span></div>
-	</div>
- 	<div id="more-integrations">
-		<span>More Integrations</span>
-	</div>
-	<button class="cabal-btn" id="activate-btn">${
-		extensionEnabled ? "Deactivate Extension" : "Activate Extension"
-	}</button>
+		<button class="cabal-btn" id="activate-btn">${
+			extensionEnabled ? "Deactivate Extension" : "Activate Extension"
+		}</button>
 	`;
 	let button = document.getElementById("activate-btn");
 	button.addEventListener("click", () => {
@@ -604,6 +577,45 @@ function generateHomeScreen(container) {
 	profile.addEventListener("click", () => {
 		clearContainer(container);
 		generateProfileScreen(container);
+	});
+}
+function generateProfileScreen(container) {
+	let currentSite = "hey.xyz";
+	let walletAddress = "0x1234...5678";
+	container.innerHTML = /*html*/ `
+	<a href="#" id="home-link">Home</a>
+	<div class="home-sub-header" style="display: flex;align-items:center; flex-direction: row; justify-content: flex-start">
+		<div id="pfp"></div>
+		<div>
+		<h3>${walletAddress}</h3>
+		<div>Current Site: ${currentSite}</div>
+		</div>
+	</div>
+	<div class="integration-container">
+		<div class="integration-square" id="nextid">
+		<img src="../img/nextid.png" />
+		<span class="title">Next.ID</span>
+		</div>
+		<div class="integration-square" id="twitter">
+		<img src="../img/twitter.png" />
+		<span class="title">Twitter</span>
+		</div>
+		<div class="integration-square" id="lens">
+		<img src="../img/lens.png" />
+		<span class="title">Lens</span></div>
+		<div class="integration-square" id="eth">
+		<img src="../img/Ethereum.png" />
+		<span class="title">Wallet</span></div>
+	</div>
+ 	<div id="more-integrations">
+		<span>More Integrations</span>
+	</div>
+	`;
+
+	let home = document.getElementById("home-link");
+	home.addEventListener("click", () => {
+		clearContainer(container);
+		generateHomeScreen(container);
 	});
 }
 function handleRender(container, navIndex) {
@@ -633,6 +645,15 @@ function handleRender(container, navIndex) {
 	}
 }
 document.addEventListener("DOMContentLoaded", async function () {
+	// marco todo: - this function needs to determine which screen to show first based on what is stored in IDB
+	// handleRender(container, navIndex);
+	// generateNextIDIntegrationScreen(container);
+	// generateConnectTwitterScreen(container);
+	// generatePostConfirmationTweenScreen(container, "message");
+	// generateImportWallet(container);
+	generateProfileScreen(container);
+	// generateHomeScreen(container);
+	return;
 	let account_exists = await checkForExistingAccount();
 	console.log("account exists", account_exists);
 
@@ -701,13 +722,6 @@ document.addEventListener("DOMContentLoaded", async function () {
 	// 	// they have an account, just show them the home screen
 	// 	handleRender(container, 7);
 	// }
-	// handleRender(container, navIndex);
-	// generateNextIDIntegrationScreen(container);
-	//generateConnectTwitterScreen(container);
-	// generatePostConfirmationTweenScreen(container);
-	// generateImportWallet(container);
-	// generateProfileScreen(container);
-	//generateHomeScreen(container);
 });
 let logoutButton = document.getElementById("log-out-btn");
 logoutButton.addEventListener("click", logout);
