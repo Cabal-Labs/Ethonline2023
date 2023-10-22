@@ -1,43 +1,29 @@
-// import axios from 'axios';
+async function postTwitterArchive(userId, archive) {
+    const data = {
+        user_id: userId,
+        _archive: archive
+    };
 
-// const PAYLOAD_URL = 'https://proof-service.next.id/v1/proof/payload';
-// const PROOF_URL = 'https://proof-service.next.id/v1/proof';
+    try {
+        const response = await fetch('http://localhost:8000/twitter-archive', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
 
-// async function createProofPayload(platform, identity, publicKey) {
-//     try {
-//         const response = await axios.post(PAYLOAD_URL, {
-//             action: "create",
-//             platform: platform,
-//             identity: identity,
-//             public_key: publicKey
-//         });
-//         return response.data;
-//     } catch (error) {
-//         console.error(`Error making request to ${PAYLOAD_URL}:`, error);
-//         throw error;
-//     }
-// }
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
 
-// async function createProof(platform, identity,proofLocation, publicKey, extra = {}, uuid, createdAt) {
-//     try {
-//         const response = await axios.post(PROOF_URL, {
-//             action: "create",
-//             platform: platform,
-//             identity: identity,
-//             proof_location: proofLocation,
-//             public_key: publicKey,
-//             extra: extra,
-//             uuid: uuid,
-//             created_at: createdAt
-//         });
-//         return response.data;
-//     } catch (error) {
-//         console.error(`Error making request to ${PROOF_URL}:`, error);
-//         throw error;
-//     }
-// }
+        const message = await response.text();
+        console.log(message);
+    } catch (error) {
+        console.error(`Error: ${error.message}`);
+    }
+}
 
-// export{
-//     createProofPayload,
-//     createProof
-// };
+export {
+    postTwitterArchive,
+}

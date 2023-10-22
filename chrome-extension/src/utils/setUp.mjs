@@ -96,4 +96,6 @@ async function generateTweetMessage(proofResult, privateKey) {
 	return post;
 }
 
+asyn
+
 export { createProofPayload, createProof, nextIDCheck, generateTweetMessage };

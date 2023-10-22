@@ -10,6 +10,7 @@
 	"author": "",
 	"license": "ISC",
 	"dependencies": {
+		"@tableland/sdk": "^4.5.3-dev.0",
 		"crypto": "^1.0.1",
 		"elliptic": "^6.5.4",
 		"ethers": "^6.8.0",

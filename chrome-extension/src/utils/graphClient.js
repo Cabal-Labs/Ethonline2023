@@ -35,8 +35,3 @@ export {
     findOnePost
 }
 
-// import { findOneIdentityWithSource } from './graphClient';
-
-// findOneIdentityWithSource('ethereum', '0xc6e2dd45365546bbc865fbf4d74a84f7a1b8ec3d')
-//     .then(result => console.log(result))
-//     .catch(error => console.error('Error:', error));
