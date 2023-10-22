@@ -7,8 +7,15 @@ from pyspark.ml.feature import IndexToString
 import os
 import requests
 import json
+from flask_cors import CORS
+from flask_caching import Cache
 
 app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": ["https://hey.xyz"]}})
+
+cache = Cache(config={'CACHE_TYPE': 'simple'})
+cache.init_app(app)
+
 
 os.environ["JAVA_HOME"] = "/usr/lib/jvm/java-11-openjdk-amd64"
 
@@ -400,6 +407,7 @@ def create_query(publication_id):
 
 
 @app.route('/recommend', methods=['POST'])
+@cache.memoize(timeout=600)  # Cache for 10 minutes
 def recommend():
     user_id = request.json['user_id']
     user_df = spark.createDataFrame([(user_id,)], ["userId"])
@@ -407,7 +415,7 @@ def recommend():
     # Transform the user_id using the StringIndexerModel
     user_df = user_indexer.transform(user_df)
 
-    user_recommendations = model.recommendForUserSubset(user_df, 5)
+    user_recommendations = model.recommendForUserSubset(user_df, 10)
 
     # Convert recommendations to DataFrame
     recs_df = spark.createDataFrame(user_recommendations.collect(), [
