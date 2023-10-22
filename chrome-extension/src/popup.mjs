@@ -115,16 +115,51 @@ async function saveTwitterHandle(handle) {
 	}
 }
 
-async function saveEthAddress(ethAddress) {
-
-
+async function saveEthAddress(privateEth, ethAddress) {
 	// get from idb
 	let account = await getNextAccount(next_public_key);
-
-	let result = await createProofPayload("ethereum", ethAddress, account);
-
-	console.log(result)
-
+	console.log("2- ACCOUNT IN SAVEETHADDRESS()", account);
+	let result = await createProofPayload(
+		"ethereum",
+		ethAddress,
+		account.publicKey
+	);
+	console.log("3 - result in saveEthAddress()", result);
+	let signResult = await doubleSignMessage(
+		account.privateKey,
+		privateEth,
+		result.sign_payload
+	);
+	console.log("4 - signResult in saveEthAddress()", signResult);
+	// save result
+	let data = {
+		nextPublicKey: next_public_key,
+		eth_wallet_private_key: privateEth,
+		eth_wallet_public_key: ethAddress,
+		eth_wallet_uuid: result.uuid,
+		eth_wallet_created_at: result.created_at,
+		eth_wallet_avatar_sig: signResult.avatarSignature,
+		eth_wallet_wallet_sig: signResult.walletSignature,
+	};
+	try {
+		const response = await new Promise((resolve, reject) => {
+			chrome.runtime.sendMessage(
+				{ command: "saveEthAddress", data },
+				(response) => {
+					console.log("5- saved?", response);
+					if (response.ok) {
+						resolve(response.ok);
+					} else {
+						reject(new Error("Failed to save Eth Address"));
+					}
+				}
+			);
+		});
+		return response;
+	} catch (error) {
+		console.error(error);
+		return false;
+	}
 }
 
 async function connectTwitterAccount(proofLocation) {
@@ -473,14 +508,22 @@ function generateImportWallet(container) {
 		console.log(e);
 		let key = e.target[0].value;
 		if (key.length === 0) {
+			alert("No private key provided");
 			return;
 		} else {
+			let private_key = key;
+			// convert the private key to a public key
+			let wallet = new ethers.Wallet(private_key, EthersProvider);
+			let public_key = wallet.address;
 			// handle submit
-			await saveEthAddress(key);
-			let saved = true;
+			console.log("1 - key into saveEth", key);
+			let saved = await saveEthAddress(private_key, public_key);
+			console.log(saved);
 			if (saved) {
 				clearContainer(container);
 				generateSuccessfulWalletImport(container);
+			} else {
+				alert("something went wrong");
 			}
 		}
 	});
@@ -492,11 +535,11 @@ function generateSuccessfulWalletImport(container) {
 		`
 	<h1 class="page-title">Congrats! </h1>
 	<h2 class="page-subtitle">Your Wallet Was Imported Successfully</h2>
-	<div id="pfp" ></div>
-	<h3>${walletAddress}</h3>
-	<a id="profile-link">Go to Profile</a>
+	<div id="pfp"></div>
+	<h3 class="fancy-wallet-text" style="text-align:center; padding-block: 10px">${walletAddress}</h3>
+	<button id="profile-btn"class="cabal-btn primary"><span>Go To Profile</span></button>
 	`;
-	let profile = document.getElementById("profile-link");
+	let profile = document.getElementById("profile-btn");
 	profile.addEventListener("click", () => {
 		clearContainer(container);
 		generateProfileScreen(container);

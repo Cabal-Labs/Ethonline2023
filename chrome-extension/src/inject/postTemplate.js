@@ -5,7 +5,7 @@ async function addPostTemplate() {
 	// Now you can access window.postTemplate in your content script
 	try {
 		let response = await fetch(postTemplateUrl);
-		console.log("response", response);
+		// console.log("response", response);
 		let html = await response.text();
 		let parser = new DOMParser();
 		let doc = parser.parseFromString(html, "text/html");
