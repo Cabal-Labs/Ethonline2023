@@ -35,40 +35,40 @@
 let recommendedPosts = [];
 
 function createVideoElement(url, poster, src, imgSrc) {
-  // Create the video element
-  let video = document.createElement("video");
+	// Create the video element
+	let video = document.createElement("video");
 
-  // Set the video element's attributes
-  video.setAttribute("src", src);
-  video.setAttribute("poster", poster);
-  video.setAttribute("width", "100%");
-  video.setAttribute("height", "100%");
-  video.setAttribute("controls", "");
+	// Set the video element's attributes
+	video.setAttribute("src", src);
+	video.setAttribute("poster", poster);
+	video.setAttribute("width", "100%");
+	video.setAttribute("height", "100%");
+	video.setAttribute("controls", "");
 
-  // Create the source element
-  let source = document.createElement("source");
+	// Create the source element
+	let source = document.createElement("source");
 
-  // Set the source element's attributes
-  source.setAttribute("src", url);
-  source.setAttribute("type", "video/mp4");
+	// Set the source element's attributes
+	source.setAttribute("src", url);
+	source.setAttribute("type", "video/mp4");
 
-  // Append the source element to the video element
-  video.appendChild(source);
+	// Append the source element to the video element
+	video.appendChild(source);
 
-  // Return the video element
-  return video;
+	// Return the video element
+	return video;
 }
 
 function addVideo(container, url, poster, src, imgSrc) {
-  // Create the video element
-  let video = createVideoElement(url, poster, src, imgSrc);
+	// Create the video element
+	let video = createVideoElement(url, poster, src, imgSrc);
 
-  // Append the video element to the container
-  container.appendChild(video);
+	// Append the video element to the container
+	container.appendChild(video);
 }
 function addShowMore(container) {
-  let showMore = document.createElement("div");
-  showMore.innerHTML = /*html*/ `
+	let showMore = document.createElement("div");
+	showMore.innerHTML = /*html*/ `
 		<div class="lt-text-gray-500 mt-4 flex items-center space-x-1 text-sm font-bold">
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
@@ -91,37 +91,37 @@ function addShowMore(container) {
 		</div>
 	`;
 
-  container.appendChild(showMore);
+	container.appendChild(showMore);
 }
 
 async function getRecommendedPosts() {
-  console.log("GETTING RECOMMENDED POSTS");
-  let endpoint = "http://127.0.0.1:5000/recommend";
-  try {
-    let fetchPromise = fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        user_id: "0x018a8f",
-      }),
-    });
+	console.log("GETTING RECOMMENDED POSTS");
+	let endpoint = "http://127.0.0.1:5000/recommend";
+	try {
+		let fetchPromise = fetch(endpoint, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({
+				user_id: "0x018a8f",
+			}),
+		});
 
-    let timeoutPromise = new Promise((resolve, reject) => {
-      let wait = setTimeout(() => {
-        clearTimeout(wait);
-        reject("Request timed out");
-      }, 300000); // 5 minutes timeout
-    });
-    let response = await Promise.race([fetchPromise, timeoutPromise]);
-    console.log("response", response);
-    let data = await response.json();
+		let timeoutPromise = new Promise((resolve, reject) => {
+			let wait = setTimeout(() => {
+				clearTimeout(wait);
+				reject("Request timed out");
+			}, 300000); // 5 minutes timeout
+		});
+		let response = await Promise.race([fetchPromise, timeoutPromise]);
+		console.log("response", response);
+		let data = await response.json();
 
-    console.log("data", data);
-    //parse data
+		console.log("data", data);
+		//parse data
 
-    /*
+		/*
 
 	    profileImage: "https://imgurl.com/id1",
     displayName: "test name 1",
@@ -134,341 +134,407 @@ async function getRecommendedPosts() {
 
 	*/
 
-    let all = [];
-    for (let i = 0; i < data.length; i++) {
-      let profilePic = data[i].data.publication.profile.picture.original.url;
+		let all = [];
+		for (let i = 0; i < data.length; i++) {
+			let profilePic = data[i].data.publication.profile.picture.original.url;
 
-      let displayName = data[i].data.publication.profile.name;
-      let userName = data[i].data.publication.profile.handle;
+			let displayName = data[i].data.publication.profile.name;
+			let userName = data[i].data.publication.profile.handle;
 
-      let reshares = data[i].data.publication.stats.totalAmountOfMirrors;
-      let likes = data[i].data.publication.stats.totalUpvotes;
-      let saves = data[i].data.publication.stats.totalAmountOfCollects;
-      let comments = data[i].data.publication.stats.totalAmountOfCollects;
-      let text_content = data[i].data.publication.metadata.content;
+			let reshares = data[i].data.publication.stats.totalAmountOfMirrors;
+			let likes = data[i].data.publication.stats.totalUpvotes;
+			let saves = data[i].data.publication.stats.totalAmountOfCollects;
+			let comments = data[i].data.publication.stats.totalAmountOfCollects;
+			let text_content = data[i].data.publication.metadata.content;
 
-      let post = {
-        profileImage: profilePic,
-        displayName: displayName,
-        username: userName,
-        text_content: text_content,
-        comments: comments,
-        reshares: reshares,
-        likes: likes,
-        saves: saves,
-      };
-      all.push(post);
-    }
+			let post = {
+				profileImage: profilePic,
+				displayName: displayName,
+				username: userName,
+				text_content: text_content,
+				comments: comments,
+				reshares: reshares,
+				likes: likes,
+				saves: saves,
+			};
+			all.push(post);
+		}
 
-    recommendedPosts = all;
+		recommendedPosts = all;
 
-    console.log("set recommended posts");
-    console.log(recommendedPosts);
+		console.log("set recommended posts");
+		console.log(recommendedPosts);
 
-    return recommendedPosts;
-  } catch (error) {
-    console.error("Error:", error);
-  }
+		return recommendedPosts;
+	} catch (error) {
+		console.error("Error:", error);
+	}
 }
 
 async function injectRecommendedPosts(container) {
-  //grab the first child of the container and clone it into the variabke postTemplate
+	//grab the first child of the container and clone it into the variabke postTemplate
 
-  let postTemplate = container.firstChild.cloneNode(true);
+	let postTemplate = container.firstChild.cloneNode(true);
 
-  console.log(postTemplate);
-  let pfpXPath = "/div[1]/span/div/a/span/span/div/img";
-  let displayNameXPath = "/div[1]/span/div/a/span/span/div/div/div[1]/div/div";
-  let usernameXPath = "/div[1]/span/div/a/span/span/div/div/div[2]/span[1]";
-  let dateXPath = "/div[1]/span/div/a/span/span/div/div/div[2]/span[2]/span[2]";
-  let textXPath = "/div[2]/div[1]/div[1]/p";
-  // let videoXPath = "/div[2]/div[1]/div[2]/div/div/div/div/video";
-  // let imgXPath = "/div[2]/div[1]/div[3]/div/img";
-  let commentsXPath = "/div[2]/div[2]/span/div[1]/span";
-  let resharesXPath = "/div[2]/div[2]/span/div[2]/span";
-  let likeXPath = "/div[2]/div[2]/span/div[3]/span";
-  let savesXPath = "/div[2]/div[2]/span/div[4]/span";
+	console.log(postTemplate);
+	let pfpXPath = "/div[1]/span/div/a/span/span/div/img";
+	let displayNameXPath = "/div[1]/span/div/a/span/span/div/div/div[1]/div/div";
+	let usernameXPath = "/div[1]/span/div/a/span/span/div/div/div[2]/span[1]";
+	let dateXPath = "/div[1]/span/div/a/span/span/div/div/div[2]/span[2]/span[2]";
+	let textXPath = "/div[2]/div[1]/div[1]/p";
+	// let videoXPath = "/div[2]/div[1]/div[2]/div/div/div/div/video";
+	// let imgXPath = "/div[2]/div[1]/div[3]/div/img";
+	let commentsXPath = "/div[2]/div[2]/span/div[1]/span";
+	let resharesXPath = "/div[2]/div[2]/span/div[2]/span";
+	let likeXPath = "/div[2]/div[2]/span/div[3]/span";
+	let savesXPath = "/div[2]/div[2]/span/div[4]/span";
 
-  while (container.firstChild) {
-    container.removeChild(container.firstChild);
-  }
-  let posts = recommendedPosts;
-  console.log(posts);
-  posts.forEach((post) => {
-    let newPost = postTemplate.cloneNode(true);
-    console.log("new post", newPost);
-    let pfpElement = document.evaluate(
-      pfpXPath,
-      newPost,
-      null,
-      XPathResult.FIRST_ORDERED_NODE_TYPE,
-      null
-    ).singleNodeValue;
-    console.log("img", pfpElement);
-    let displayNameElement = document.evaluate(
-      displayNameXPath,
-      newPost,
-      null,
-      XPathResult.FIRST_ORDERED_NODE_TYPE,
-      null
-    ).singleNodeValue;
-    let usernameElement = document.evaluate(
-      usernameXPath,
-      newPost,
-      null,
-      XPathResult.FIRST_ORDERED_NODE_TYPE,
-      null
-    ).singleNodeValue;
-    let dateElement = document.evaluate(
-      dateXPath,
-      newPost,
-      null,
-      XPathResult.FIRST_ORDERED_NODE_TYPE,
-      null
-    ).singleNodeValue;
-    let textContentElement = document.evaluate(
-      textXPath,
-      newPost,
-      null,
-      XPathResult.FIRST_ORDERED_NODE_TYPE,
-      null
-    ).singleNodeValue;
-    // Handle comments, shares, likes, and saves
-    let commentsElement = document.evaluate(
-      commentsXPath,
-      newPost,
-      null,
-      XPathResult.FIRST_ORDERED_NODE_TYPE,
-      null
-    ).singleNodeValue;
-    let resharesElement = document.evaluate(
-      resharesXPath,
-      newPost,
-      null,
-      XPathResult.FIRST_ORDERED_NODE_TYPE,
-      null
-    ).singleNodeValue;
-    let likeElement = document.evaluate(
-      likeXPath,
-      newPost,
-      null,
-      XPathResult.FIRST_ORDERED_NODE_TYPE,
-      null
-    ).singleNodeValue;
-    let savedElement = document.evaluate(
-      savesXPath,
-      newPost,
-      null,
-      XPathResult.FIRST_ORDERED_NODE_TYPE,
-      null
-    ).singleNodeValue;
-    // Remove existing video or image elements
-    // let videoElement = document.evaluate(
-    // 	videoXPath,
-    // 	newPost,
-    // 	null,
-    // 	XPathResult.FIRST_ORDERED_NODE_TYPE,
-    // 	null
-    // ).singleNodeValue;
-    // let imageElement = document.evaluate(
-    // 	imgXPath,
-    // 	newPost,
-    // 	null,
-    // 	XPathResult.FIRST_ORDERED_NODE_TYPE,
-    // 	null
-    // ).singleNodeValue;
+	while (container.firstChild) {
+		container.removeChild(container.firstChild);
+	}
+	let posts = recommendedPosts;
+	console.log(posts);
+	posts.forEach((post) => {
+		let newPost = postTemplate.cloneNode(true);
+		console.log("new post", newPost);
+		let pfpElement = document.evaluate(
+			pfpXPath,
+			newPost,
+			null,
+			XPathResult.FIRST_ORDERED_NODE_TYPE,
+			null
+		).singleNodeValue;
+		console.log("img", pfpElement);
+		let displayNameElement = document.evaluate(
+			displayNameXPath,
+			newPost,
+			null,
+			XPathResult.FIRST_ORDERED_NODE_TYPE,
+			null
+		).singleNodeValue;
+		let usernameElement = document.evaluate(
+			usernameXPath,
+			newPost,
+			null,
+			XPathResult.FIRST_ORDERED_NODE_TYPE,
+			null
+		).singleNodeValue;
+		let dateElement = document.evaluate(
+			dateXPath,
+			newPost,
+			null,
+			XPathResult.FIRST_ORDERED_NODE_TYPE,
+			null
+		).singleNodeValue;
+		let textContentElement = document.evaluate(
+			textXPath,
+			newPost,
+			null,
+			XPathResult.FIRST_ORDERED_NODE_TYPE,
+			null
+		).singleNodeValue;
+		// Handle comments, shares, likes, and saves
+		let commentsElement = document.evaluate(
+			commentsXPath,
+			newPost,
+			null,
+			XPathResult.FIRST_ORDERED_NODE_TYPE,
+			null
+		).singleNodeValue;
+		let resharesElement = document.evaluate(
+			resharesXPath,
+			newPost,
+			null,
+			XPathResult.FIRST_ORDERED_NODE_TYPE,
+			null
+		).singleNodeValue;
+		let likeElement = document.evaluate(
+			likeXPath,
+			newPost,
+			null,
+			XPathResult.FIRST_ORDERED_NODE_TYPE,
+			null
+		).singleNodeValue;
+		let savedElement = document.evaluate(
+			savesXPath,
+			newPost,
+			null,
+			XPathResult.FIRST_ORDERED_NODE_TYPE,
+			null
+		).singleNodeValue;
+		// Remove existing video or image elements
+		// let videoElement = document.evaluate(
+		// 	videoXPath,
+		// 	newPost,
+		// 	null,
+		// 	XPathResult.FIRST_ORDERED_NODE_TYPE,
+		// 	null
+		// ).singleNodeValue;
+		// let imageElement = document.evaluate(
+		// 	imgXPath,
+		// 	newPost,
+		// 	null,
+		// 	XPathResult.FIRST_ORDERED_NODE_TYPE,
+		// 	null
+		// ).singleNodeValue;
 
-    // if (videoElement) videoElement.parentNode.removeChild(videoElement);
-    // if (imageElement) imageElement.parentNode.removeChild(imageElement);
+		// if (videoElement) videoElement.parentNode.removeChild(videoElement);
+		// if (imageElement) imageElement.parentNode.removeChild(imageElement);
 
-    // broken code - working on embedding videos
-    // if (true) {
-    // 	let src = "blob:https://hey.xyz/8a3f5b81-b4e9-4ee3-b65a-98432179c323";
-    // 	let imgSrc =
-    // 		"https://ik.imagekit.io/lens/media-snapshot/4a6a401ec6bc8340ad20281bb92a1e36350523171b4e6f7b34cb238f6abe8e52.png";
-    // 	let poster =
-    // 		"https://ik.imagekit.io/lens/media-snapshot/4a6a401ec6bc8340ad20281bb92a1e36350523171b4e6f7b34cb238f6abe8e52.png";
-    // 	let url =
-    // 		"https://vod-cdn.lp-playback.studio/raw/jxf4iblf6wlsyor6526t4tcmtmqa/catalyst-vod-com/hls/02a36bfsjo3fim2r/index.m3u8";
-    // 	addVideo(newPost, url, poster, src, imgSrc);
-    // }
-    // Assign values to the elements
+		// broken code - working on embedding videos
+		// if (true) {
+		// 	let src = "blob:https://hey.xyz/8a3f5b81-b4e9-4ee3-b65a-98432179c323";
+		// 	let imgSrc =
+		// 		"https://ik.imagekit.io/lens/media-snapshot/4a6a401ec6bc8340ad20281bb92a1e36350523171b4e6f7b34cb238f6abe8e52.png";
+		// 	let poster =
+		// 		"https://ik.imagekit.io/lens/media-snapshot/4a6a401ec6bc8340ad20281bb92a1e36350523171b4e6f7b34cb238f6abe8e52.png";
+		// 	let url =
+		// 		"https://vod-cdn.lp-playback.studio/raw/jxf4iblf6wlsyor6526t4tcmtmqa/catalyst-vod-com/hls/02a36bfsjo3fim2r/index.m3u8";
+		// 	addVideo(newPost, url, poster, src, imgSrc);
+		// }
+		// Assign values to the elements
 
-    if (pfpElement) pfpElement.src = post.profileImage;
-    if (displayNameElement) displayNameElement.textContent = post.displayName;
-    if (usernameElement) usernameElement.textContent = post.username;
-    if (dateElement) dateElement.textContent = new Date().toLocaleString();
-    if (textContentElement) textContentElement.textContent = post.text_content;
-    if (commentsElement) {
-      commentsElement.textContent = post.comments;
-      commentsElement.addEventListener("click", () =>
-        alert("need to handle comment button")
-      );
-    }
-    if (resharesElement) {
-      resharesElement.textContent = post.reshares;
-      resharesElement.addEventListener("click", () =>
-        alert("need to handle reshare button")
-      );
-    }
-    if (likeElement) {
-      likeElement.textContent = post.likes;
-      likeElement.addEventListener("click", () =>
-        alert("need to handle like button")
-      );
-    }
-    if (savedElement) {
-      savedElement.textContent = post.saves;
-      savedElement.addEventListener("click", () =>
-        alert("need to handle save button")
-      );
-    }
-    if (container) container.appendChild(newPost);
-  });
+		if (pfpElement) pfpElement.src = post.profileImage;
+		if (displayNameElement) displayNameElement.textContent = post.displayName;
+		if (usernameElement) usernameElement.textContent = post.username;
+		if (dateElement) dateElement.textContent = new Date().toLocaleString();
+		if (textContentElement) textContentElement.textContent = post.text_content;
+		if (commentsElement) {
+			commentsElement.textContent = post.comments;
+			commentsElement.addEventListener("click", () =>
+				alert("need to handle comment button")
+			);
+		}
+		if (resharesElement) {
+			resharesElement.textContent = post.reshares;
+			resharesElement.addEventListener("click", () =>
+				alert("need to handle reshare button")
+			);
+		}
+		if (likeElement) {
+			likeElement.textContent = post.likes;
+			likeElement.addEventListener("click", () =>
+				alert("need to handle like button")
+			);
+		}
+		if (savedElement) {
+			savedElement.textContent = post.saves;
+			savedElement.addEventListener("click", () =>
+				alert("need to handle save button")
+			);
+		}
+		if (container) container.appendChild(newPost);
+	});
 }
 async function getTargetElement() {
-  let targetElement = null;
-  while (!targetElement) {
-    targetElement = document.querySelector('[aria-label="Highlights"]');
-    if (!targetElement) {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
-  }
-  return targetElement.parentElement;
+	let targetElement = null;
+	while (!targetElement) {
+		targetElement = document.querySelector('[aria-label="Highlights"]');
+		if (!targetElement) {
+			await new Promise((resolve) => setTimeout(resolve, 1000));
+		}
+	}
+	return targetElement.parentElement;
 }
 
 async function addRecommendationTabButton() {
-  const buttonContainer = await getTargetElement();
+	const buttonContainer = await getTargetElement();
 
-  // Create the custom recommendation button
-  const customRecommendationButton = createDomElement(`
+	// Create the custom recommendation button
+	const customRecommendationButton = createDomElement(`
         <button id="cabal-sorel-button">  
             <span>Recommendations ++</span> 
         </button>
     `);
 
-  // If the button container exists, append the custom button to it
-  if (!!buttonContainer) {
-    buttonContainer.append(customRecommendationButton);
-  } else {
-    // If the button container doesn't exist, append the custom button to the body as a fallback
-    document.body.append(customRecommendationButton);
-  }
-  let button = document.getElementById("cabal-sorel-button");
-  button.addEventListener("click", async () => {
-    const feedContainer = document.querySelector("div > article").parentElement;
-    // the feed container is the only div on the page where it's immediate children are article tags.
-    await injectRecommendedPosts(feedContainer);
-  });
+	// If the button container exists, append the custom button to it
+	if (!!buttonContainer) {
+		buttonContainer.append(customRecommendationButton);
+	} else {
+		// If the button container doesn't exist, append the custom button to the body as a fallback
+		document.body.append(customRecommendationButton);
+	}
+	let button = document.getElementById("cabal-sorel-button");
+	button.addEventListener("click", async () => {
+		const feedContainer = document.querySelector("div > article").parentElement;
+		// the feed container is the only div on the page where it's immediate children are article tags.
+		await injectRecommendedPosts(feedContainer);
+	});
 }
 
 // This function takes a string of HTML, parses it into a DOM object, and returns the first child of the body.
 function createDomElement(html) {
-  const dom = new DOMParser().parseFromString(html, "text/html");
-  return dom.body.firstElementChild;
+	const dom = new DOMParser().parseFromString(html, "text/html");
+	return dom.body.firstElementChild;
 }
-function customLikeEventListener() {
-  // This function will be called when a 'like' button is clicked
-  alert("Like button clicked!");
-}
-function addEventListenersToLikeButtons() {
-  console.log("adding like event listeners - not done");
-  // This function will loop through the document and add a custom event listener to all elements with an aria-label of "like";
-  // const likeButtons = document.querySelectorAll('[aria-label="Like"]');
-  // console.log("LIKE BUTTONS", likeButtons);
-  // if (likeButtons.length > 0) {
-  // 	likeButtons.forEach((button) => {
-  // 		button.addEventListener("click", customLikeEventListener);
-  // 	});
-  // 	alert("finished");
-  // } else {
-  // 	console.log("No like buttons found");
-  // }
-}
+
 console.log("Inject script running ", document.readyState);
 if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", async () => {
-    addRecommendationTabButton();
-    addEventListenersToLikeButtons();
-    await getRecommendedPosts();
-  });
+	document.addEventListener("DOMContentLoaded", async () => {
+		addRecommendationTabButton();
+		await getRecommendedPosts();
+	});
 } else {
-  addRecommendationTabButton();
-  addEventListenersToLikeButtons();
-  (async () => {
-    getRecommendedPosts();
-  })();
+	addRecommendationTabButton();
+	(async () => {
+		getRecommendedPosts();
+	})();
 }
+// function customLikeEventListener() {
+// 	// This function will be called when a 'like' button is clicked
+// 	alert("Like button clicked!");
+// }
+// function addEventListenersToLikeButtons() {
+// 	console.log("adding like event listeners - not done");
+// 	// This function will loop through the document and add a custom event listener to all elements with an aria-label of "like";
+// 	// const likeButtons = document.querySelectorAll('[aria-label="Like"]');
+// 	// console.log("LIKE BUTTONS", likeButtons);
+// 	// if (likeButtons.length > 0) {
+// 	// 	likeButtons.forEach((button) => {
+// 	// 		button.addEventListener("click", customLikeEventListener);
+// 	// 	});
+// 	// 	alert("finished");
+// 	// } else {
+// 	// 	console.log("No like buttons found");
+// 	// }
+// }
+// function addLikeButtonEventListener(container) {
+// 	let likeXPath = "/div[2]/div[2]/span/div[3]/button";
+// 	let likeElement;
 function addLikeButtonEventListener(container) {
-  let likeXPath = "/div[2]/div[2]/span/div[3]/button";
-  let likeElement;
+	let likeXPath = "/div[2]/div[2]/span/div[3]/button";
+	let likeElement;
 
-  setTimeout(function () {
-    try {
-      likeElement = document.evaluate(
-        likeXPath,
-        container,
-        null,
-        XPathResult.FIRST_ORDERED_NODE_TYPE,
-        null
-      ).singleNodeValue;
-    } catch (error) {
-      console.error("Error while evaluating XPath: ", error);
-    }
-    console.log("like", likeElement);
-    // Check if likeElement is not undefined before proceeding
-    if (likeElement) {
-      // Wrap the element in a new button that will propagate the click event and also fire a custom function
-      let wrapper = document.createElement("button");
-      wrapper.style.border = "1px solid green";
-      wrapper.addEventListener("click", (event) => {
-        customLikeEventListener(event);
-        likeElement.click();
-      });
-      likeElement.parentNode.replaceChild(wrapper, likeElement);
-      wrapper.appendChild(likeElement);
-    } else {
-      console.log("likeElement is undefined");
-    }
-  }, 2000); // Adjust the delay to suit the page's load time
+	// 	setTimeout(function () {
+	// 		try {
+	// 			likeElement = document.evaluate(
+	// 				likeXPath,
+	// 				container,
+	// 				null,
+	// 				XPathResult.FIRST_ORDERED_NODE_TYPE,
+	// 				null
+	// 			).singleNodeValue;
+	// 		} catch (error) {
+	// 			console.error("Error while evaluating XPath: ", error);
+	// 		}
+	// 		console.log("like", likeElement);
+	// 		// Check if likeElement is not undefined before proceeding
+	// 		if (likeElement) {
+	// 			// Wrap the element in a new button that will propagate the click event and also fire a custom function
+	// 			let wrapper = document.createElement("button");
+	// 			wrapper.style.border = "1px solid green";
+	// 			wrapper.addEventListener("click", (event) => {
+	// 				customLikeEventListener(event);
+	// 				likeElement.click();
+	// 			});
+	// 			likeElement.parentNode.replaceChild(wrapper, likeElement);
+	// 			wrapper.appendChild(likeElement);
+	// 		} else {
+	// 			console.log("likeElement is undefined");
+	// 		}
+	// 	}, 2000); // Adjust the delay to suit the page's load time
+	// }
+	// function setupEventListeners() {
+	// 	let articlesArray = [];
+	// 	let previousLength = 0;
+	// 	let noNewArticlesCount = 0;
+	// 	setTimeout(function () {
+	// 		let articleElements = document.getElementsByTagName("article");
+	// 		if (articleElements.length > 0) {
+	// 			console.log(articleElements);
+	// 			for (let i = 0; i < articleElements.length; i++) {
+	// 				articlesArray.push(articleElements[i]);
+	// 			}
+	// 		} else {
+	// 			console.log("No articles found");
+	// 		}
+	// 		console.log(articlesArray);
+	// 		console.log(articlesArray.length);
+	// 		if (articlesArray.length > 0) {
+	// 			// Log the post
+	// 			articlesArray.forEach((post) => {
+	// 				console.log("post", typeof post, post);
+	// 				addLikeButtonEventListener(post);
+	// 			});
+	// 		} else {
+	// 			// Log a message if no posts are found
+	// 			console.log("No posts found");
+	// 		}
+	// 	}, 2000); // Adjust the delay to suit the page's load time
+	setTimeout(function () {
+		try {
+			likeElement = document.evaluate(
+				likeXPath,
+				container,
+				null,
+				XPathResult.FIRST_ORDERED_NODE_TYPE,
+				null
+			).singleNodeValue;
+		} catch (error) {
+			console.error("Error while evaluating XPath: ", error);
+		}
+		console.log("like", likeElement);
+		// Check if likeElement is not undefined before proceeding
+		if (likeElement) {
+			// Wrap the element in a new button that will propagate the click event and also fire a custom function
+			let wrapper = document.createElement("button");
+			wrapper.style.border = "1px solid green";
+			wrapper.addEventListener("click", (event) => {
+				customLikeEventListener(event);
+				likeElement.click();
+			});
+			likeElement.parentNode.replaceChild(wrapper, likeElement);
+			wrapper.appendChild(likeElement);
+		} else {
+			console.log("likeElement is undefined");
+		}
+	}, 2000); // Adjust the delay to suit the page's load time
 }
 function setupEventListeners() {
-  let articlesArray = [];
-  let previousLength = 0;
-  let noNewArticlesCount = 0;
-  setTimeout(function () {
-    let articleElements = document.getElementsByTagName("article");
-    if (articleElements.length > 0) {
-      console.log(articleElements);
-      for (let i = 0; i < articleElements.length; i++) {
-        articlesArray.push(articleElements[i]);
-      }
-    } else {
-      console.log("No articles found");
-    }
-    console.log(articlesArray);
-    console.log(articlesArray.length);
-    if (articlesArray.length > 0) {
-      // Log the post
-      articlesArray.forEach((post) => {
-        console.log("post", typeof post, post);
-        addLikeButtonEventListener(post);
-      });
-    } else {
-      // Log a message if no posts are found
-      console.log("No posts found");
-    }
-  }, 2000); // Adjust the delay to suit the page's load time
+	let articlesArray = [];
+	let previousLength = 0;
+	let noNewArticlesCount = 0;
+	setTimeout(function () {
+		let articleElements = document.getElementsByTagName("article");
+		if (articleElements.length > 0) {
+			console.log(articleElements);
+			for (let i = 0; i < articleElements.length; i++) {
+				articlesArray.push(articleElements[i]);
+			}
+		} else {
+			console.log("No articles found");
+		}
+		console.log(articlesArray);
+		console.log(articlesArray.length);
+		if (articlesArray.length > 0) {
+			// Log the post
+			articlesArray.forEach((post) => {
+				console.log("post", typeof post, post);
+				addLikeButtonEventListener(post);
+			});
+		} else {
+			// Log a message if no posts are found
+			console.log("No posts found");
+		}
+	}, 2000); // Adjust the delay to suit the page's load time
 
-  // Get all the elements that match the tag name "article"
+	// 	// Get all the elements that match the tag name "article"
+	// Get all the elements that match the tag name "article"
 
-  // Check if there are any posts
+	// 	// Check if there are any posts
+	// }
+	// Check if there are any posts
 }
 
+// function customLikeEventListener(event) {
+// 	console.log("CUSTOM CLICK");
+// 	console.log("event", event);
+// 	event.preventDefault();
+// }
 function customLikeEventListener(event) {
-  console.log("CUSTOM CLICK");
-  console.log("event", event);
-  event.preventDefault();
+	console.log("CUSTOM CLICK");
+	console.log("event", event);
+	event.preventDefault();
 }
 // var observer = new MutationObserver(function (mutationsList, observer) {
 // 	console.log("mutation observed");

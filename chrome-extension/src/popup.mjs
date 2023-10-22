@@ -35,7 +35,7 @@ async function createNextId() {
 			(response) => {
 				console.log("in set up next id", response);
 				if (!!response) {
-					handleRender(container, 2);
+					generateConnectTwitterScreen(container);
 				} else {
 					console.log("blah");
 				}
@@ -329,7 +329,7 @@ function generateWelcomeScreen(container) {
 	let button = document.getElementById("get-started-btn");
 	button.addEventListener("click", () => {
 		clearContainer(container);
-		handleRender(container, 1);
+		generateNextIDIntegrationScreen(container);
 	});
 }
 
@@ -542,7 +542,9 @@ function generateSuccessfulWalletImport(container) {
 	let profile = document.getElementById("profile-btn");
 	profile.addEventListener("click", () => {
 		clearContainer(container);
-		generateProfileScreen(container);
+		(async () => {
+			await generateProfileScreen(container);
+		})();
 	});
 }
 function generateHomeScreen(container) {
@@ -556,7 +558,9 @@ function generateHomeScreen(container) {
 		<div id="pfp" ></div>
 		<h3>${walletAddress}</h3>
 		</div>
-		<button class="cabal-btn" id="activate-btn">${
+		<button class="cabal-btn ${
+			extensionEnabled ? "" : "primary"
+		}" id="activate-btn">${
 			extensionEnabled ? "Deactivate Extension" : "Activate Extension"
 		}</button>
 	`;
@@ -573,14 +577,19 @@ function generateHomeScreen(container) {
 	let profile = document.getElementById("profile-link");
 	profile.addEventListener("click", () => {
 		clearContainer(container);
-		generateProfileScreen(container);
+		(async () => {
+			await generateProfileScreen(container);
+		})();
 	});
 }
-function generateProfileScreen(container) {
+async function generateProfileScreen(container) {
+	let account = await checkForExistingAccount();
+	console.log("account in generateProfileScreen", account);
 	let currentSite = "hey.xyz";
 	let walletAddress = "0x1234...5678";
 	container.innerHTML = /*html*/ `
 	<a href="#" id="home-link">Home</a>
+	<a href="#" id="log-out-link">Log Out</a>
 	<div class="home-sub-header" style="display: flex;align-items:center; flex-direction: row; justify-content: flex-start">
 		<div id="pfp"></div>
 		<div>
@@ -588,14 +597,21 @@ function generateProfileScreen(container) {
 		<div>Current Site: ${currentSite}</div>
 		</div>
 	</div>
+	<div class="callout">
+	<a id="improve-twitter" style="cursor:pointer">Improve Recommendations with Twitter History</a>
+	</div>
+
 	<div class="integration-container">
+	    
 		<div class="integration-square" id="nextid">
 		<img src="../img/nextid.png" />
 		<span class="title">Next.ID</span>
 		</div>
 		<div class="integration-square" id="twitter">
 		<img src="../img/twitter.png" />
-		<span class="title">Twitter</span>
+		<span class="title">
+		Twitter
+		</span>
 		</div>
 		<div class="integration-square" id="lens">
 		<img src="../img/lens.png" />
@@ -614,33 +630,100 @@ function generateProfileScreen(container) {
 		clearContainer(container);
 		generateHomeScreen(container);
 	});
-}
-function handleRender(container, navIndex) {
-	console.log("rendering", navIndex);
-	clearContainer(container);
-	if (navIndex === 0) {
-		generateWelcomeScreen(container);
-	} else if (navIndex === 1) {
-		generateNextIDIntegrationScreen(container);
-	} else if (navIndex === 2) {
-		generateConnectTwitterScreen(container);
-	} else if (navIndex === 3) {
-		generatePostConfirmationTweenScreen(
-			container,
-			"you don't need to post any tweets rn"
+
+	let nextid = document.getElementById("nextid");
+	nextid.addEventListener("click", () => {
+		window.open("TODO", "_blank");
+	});
+
+	let twitter = document.getElementById("twitter");
+	twitter.addEventListener("click", () => {
+		window.open(`https://twitter.com/${account.twitter_handle}`, "_blank");
+	});
+
+	let lens = document.getElementById("lens");
+	lens.addEventListener("click", () => {
+		window.open("TODO", "_blank");
+	});
+
+	let eth = document.getElementById("eth");
+	eth.addEventListener("click", () => {
+		window.open(
+			`https://etherscan.io/address/${account.eth_wallet_public_key}`,
+			"_blank"
 		);
-	} else if (navIndex === 4) {
-		generateImportWallet(container);
-	} else if (navIndex === 5) {
-		generateSuccessfulWalletImport(container);
-	} else if (navIndex === 6) {
-		generateProfileScreen(container);
-	} else if (navIndex === 7) {
-		generateHomeScreen(container);
-	} else {
-		container.innerHTML = /* html */ `<div>Error</div>`;
+	});
+	let improveTwitter = document.getElementById("improve-twitter");
+	improveTwitter.addEventListener("click", () => {
+		clearContainer(container);
+		generateTwitterHistoryScreen(container);
+	});
+	let logoutButton = document.getElementById("log-out-link");
+	logoutButton.addEventListener("click", logout);
+}
+
+async function uploadTwitterHistoryToTableland(data) {
+	try {
+		// api
+	} catch (e) {
+		console.error(e);
 	}
 }
+function generateTwitterHistoryScreen(container) {
+	container.innerHTML = /*html*/ `
+	<div class="main-container" >
+		<h1 class="title" style="text-align:left">Improve Recommendations with Twitter History</h1>
+		<h2 class="page-subtitle" style="text-align:left">This requires downloading your twitter archive</h2>
+		<a style="text-align:left" class="link" href="https://help.twitter.com/en/managing-your-account/accessing-your-x-data#:~:text=Click%20or%20tap%20More%20in,an%20archive%20of%20your%20data." target="_blank">How do I download my twitter archive?</a>
+		<div class="info">
+			<h3>
+				Only upload [root folder]/data/likes.js
+			</h3>
+		</div>
+		<form id="upload-twitter-history-form" style=>
+		
+			<input type="file" id="upload-twitter-history-btn" class="file-upload">
+			<button type="submit" class="cabal-btn primary">
+				<span>
+					Upload Twitter History
+				</span>
+			</button>
+		</form>
+	</div>
+	`;
+	let form = document.getElementById("upload-twitter-history-form");
+	form.addEventListener("submit", async (event) => {
+		event.preventDefault();
+		// handle the file upload
+		let fileInput = document.getElementById("upload-twitter-history-btn");
+		let file = fileInput.files[0];
+		console.log(file);
+		// process the file
+		// save the contents of the file as an array, the file will only contain:
+		// window.YTD.like.part0 = [{a list of objects}]
+		// i want the objects
+		let dataToSave = "";
+		let reader = new FileReader();
+		reader.onload = function (event) {
+			// log the contents of the file
+			let result = event.target.result;
+			let prefixToStrip = "window.YTD.like.part0 = ";
+			let strippedResult = result.slice(prefixToStrip.length);
+			let parsedResult = JSON.parse(strippedResult);
+			// get the first 500 likes from the parsed result list
+			let first500 = parsedResult.slice(0, 500);
+			console.log(first500);
+			let string500 = JSON.stringify(first500);
+			// send the first 500 likes to the background script
+			dataToSave = string500;
+		};
+
+		reader.readAsText(file);
+		// send the data to the background script
+		await uploadTwitterHistoryToTableland(dataToSave);
+	});
+}
+
 async function getTwitterAccount(publicKey) {
 	try {
 		let response = await new Promise((resolve, reject) => {
@@ -696,7 +779,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 	let account = await checkForExistingAccount();
 	if (!account) {
 		console.log("no account found");
-		handleRender(container, 0);
+		generateWelcomeScreen(container);
 		return;
 	}
 	console.log(account);
@@ -719,8 +802,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 			);
 			return;
 		} else {
-			if (!!account.ethPublicKey) {
-				generateProfileScreen(container);
+			if (!!account.eth_wallet_public_key) {
+				await generateProfileScreen(container);
 				return;
 			} else {
 				generateImportWallet(container);
@@ -728,13 +811,12 @@ document.addEventListener("DOMContentLoaded", async function () {
 			}
 		}
 	} else {
-		console.log("we fucked up");
+		generateWelcomeScreen(container);
 	}
 });
-let logoutButton = document.getElementById("log-out-btn");
-logoutButton.addEventListener("click", logout);
-let printButton = document.getElementById("print-btn");
-printButton.addEventListener("click", printIDB);
+
+// let printButton = document.getElementById("print-btn");
+// printButton.addEventListener("click", printIDB);
 // dev shit ------------------------------------
 // let printBtn = document.createElement("button");
 // printBtn.textContent = "print idb to console";
