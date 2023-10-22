@@ -91,21 +91,13 @@ function addShowMore(container) {
 }
 
 async function getRecommendedPosts() {
-	let endpoint = "test_endpoint";
-	if (endpoint === "test_endpoint") {
-		return new Promise((resolve, reject) => {
-			setTimeout(() => {
-				resolve(samplePosts);
-			}, Math.random() * 1000);
-		});
-	} else {
-		try {
-			let response = await fetch(endpoint);
-			let data = await response.json();
-			return data;
-		} catch (error) {
-			console.error("Error:", error);
-		}
+	let endpoint = "http://127.0.0.1:500/recomment";
+	try {
+		let response = await fetch(endpoint);
+		let data = await response.json();
+		return data;
+	} catch (error) {
+		console.error("Error:", error);
 	}
 }
 function injectScript(code) {
@@ -132,7 +124,7 @@ async function injectRecommendedPosts(container) {
 	while (container.firstChild) {
 		container.removeChild(container.firstChild);
 	}
-	let posts = await getRecommendedPosts();
+	let posts = samplePosts;
 	console.log(posts);
 	posts.forEach((post) => {
 		let newPost = postTemplate.cloneNode(true);
@@ -330,11 +322,13 @@ function addEventListenersToLikeButtons() {
 }
 console.log("Inject script running ", document.readyState);
 if (document.readyState === "loading") {
-	document.addEventListener("DOMContentLoaded", () => {
+	document.addEventListener("DOMContentLoaded", async () => {
 		addRecommendationTabButton();
 		addEventListenersToLikeButtons();
+		await getRecommendedPosts();
 	});
 } else {
 	addRecommendationTabButton();
 	addEventListenersToLikeButtons();
+	await getRecommendedPosts();
 }

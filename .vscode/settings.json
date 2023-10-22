@@ -4,5 +4,11 @@
 		"titleBar.activeBackground": "#21454C",
 		"titleBar.activeForeground": "#F9FCFC"
 	},
-	"cSpell.words": ["reshare"]
+	"cSpell.words": [
+		"reshare"
+	],
+	"[python]": {
+		"editor.defaultFormatter": "ms-python.autopep8"
+	},
+	"python.formatting.provider": "none"
 }
