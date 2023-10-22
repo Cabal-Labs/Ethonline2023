@@ -103,6 +103,7 @@ async function saveTwitterHandle(handle) {
 				async (response) => {
 					console.log("twitter save response ", response);
 					if (response.ok) {
+						const post = await generateTweetMessage(result, priv_key);
 						clearContainer(container);
 						generatePostConfirmationTweenScreen(container, post);
 					}
@@ -114,46 +115,16 @@ async function saveTwitterHandle(handle) {
 	}
 }
 
-async function saveEthAddress(e) {
-	e.preventDefault();
+async function saveEthAddress(ethAddress) {
 
-	let ethAddress = "";
 
 	// get from idb
-	let nextPublicKey = "";
-	chrome.runtime.sendMessage({ command: "getNextPublicKey" }, (response) => {
-		console.log(response); // Should log "Account Saved"
-		if (response.ok === true) {
-			// success, render the next screen
-			nextPublicKey = response.nextPublicKey;
-		} else {
-			alert("something went wrong");
-		}
-	});
+	let account = await getNextAccount(next_public_key);
 
-	chrome.runtime.sendMessage({ command: "getNextPrivateKey" }, (response) => {
-		console.log(response); // Should log "Account Saved"
-		if (response.ok === true) {
-			// success, render the next screen
-			nextPrivateKey = response.nextPrivateKey;
-		} else {
-			alert("something went wrong");
-		}
-	});
-	chrome.runtime.sendMessage({ command: "getPrivateKey" }, (response) => {
-		console.log(response); // Should log "Account Saved"
-		if (response.ok === true) {
-			// success, render the next screen
-			walletPrivate = response.PrivateKey;
-		} else {
-			alert("something went wrong");
-		}
-	});
+	let result = await createProofPayload("ethereum", ethAddress, account);
 
-	let result = await createProofPayload("ethreum", ethAddress, nextPublicKey);
-	if (result.ok) {
-		// save result
-	}
+	console.log(result)
+
 }
 
 async function connectTwitterAccount(proofLocation) {
@@ -454,6 +425,8 @@ function generateAcceptTwitterLinkScreen(container) {
 				console.log("locationId", locationId);
 				let result = await connectTwitterAccount(locationId);
 				console.log("connectTwitterAccount", result);
+				clearContainer(container);
+				generateImportWallet(container);
 			} else {
 				alert("Invalid URL provided");
 				return;
@@ -495,7 +468,7 @@ function generateImportWallet(container) {
 			button.disabled = true;
 		}
 	});
-	form.addEventListener("submit", (e) => {
+	form.addEventListener("submit", async (e) => {
 		e.preventDefault();
 		console.log(e);
 		let key = e.target[0].value;
@@ -503,8 +476,8 @@ function generateImportWallet(container) {
 			return;
 		} else {
 			// handle submit
-			saveEthAddress(key);
-			saved = true;
+			await saveEthAddress(key);
+			let saved = true;
 			if (saved) {
 				clearContainer(container);
 				generateSuccessfulWalletImport(container);
