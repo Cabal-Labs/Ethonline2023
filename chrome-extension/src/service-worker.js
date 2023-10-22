@@ -90,15 +90,13 @@ initDB().then((database) => {
 			return true;
 		}
 
-		if (message.command === "getTwitterHandle") {
+		if (message.command === "getTwitterAccount") {
 			let data = message.data;
 			getValue(db, "account", data.next_public_key).then((data) => {
 				console.log("get twitter handle in sw", data);
-				let twitter_handle = "";
-				try {
-					twitter_handle = data.twitter_handle;
-					sendResponse({ ok: true, twitter_handle });
-				} catch (err) {
+				if (!!data) {
+					sendResponse({ ok: true, data });
+				} else {
 					console.log("no twitter handle");
 					sendResponse({ ok: false });
 				}

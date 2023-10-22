@@ -108,16 +108,22 @@ async function getRecommendedPosts() {
 		}
 	}
 }
+function injectScript(code) {
+	let script = document.createElement("script");
+	script.textContent = code;
+	(document.head || document.documentElement).appendChild(script);
+	script.remove();
+}
 
 async function injectRecommendedPosts(container) {
-	let postTemplate = container.firstChild.cloneNode(true);
+	console.log(postTemplate);
 	let pfpXPath = "/div[1]/span/div/a/span/span/div/img";
 	let displayNameXPath = "/div[1]/span/div/a/span/span/div/div/div[1]/div/div";
 	let usernameXPath = "/div[1]/span/div/a/span/span/div/div/div[2]/span[1]";
 	let dateXPath = "/div[1]/span/div/a/span/span/div/div/div[2]/span[2]/span[2]";
 	let textXPath = "/div[2]/div[1]/div[1]/p";
-	let videoXPath = "/div[2]/div[1]/div[2]/div/div/div/div/video";
-	let imgXPath = "/div[2]/div[1]/div[3]/div/img";
+	// let videoXPath = "/div[2]/div[1]/div[2]/div/div/div/div/video";
+	// let imgXPath = "/div[2]/div[1]/div[3]/div/img";
 	let commentsXPath = "/div[2]/div[2]/span/div[1]/span";
 	let resharesXPath = "/div[2]/div[2]/span/div[2]/span";
 	let likeXPath = "/div[2]/div[2]/span/div[3]/span";
@@ -197,23 +203,23 @@ async function injectRecommendedPosts(container) {
 			null
 		).singleNodeValue;
 		// Remove existing video or image elements
-		let videoElement = document.evaluate(
-			videoXPath,
-			newPost,
-			null,
-			XPathResult.FIRST_ORDERED_NODE_TYPE,
-			null
-		).singleNodeValue;
-		let imageElement = document.evaluate(
-			imgXPath,
-			newPost,
-			null,
-			XPathResult.FIRST_ORDERED_NODE_TYPE,
-			null
-		).singleNodeValue;
+		// let videoElement = document.evaluate(
+		// 	videoXPath,
+		// 	newPost,
+		// 	null,
+		// 	XPathResult.FIRST_ORDERED_NODE_TYPE,
+		// 	null
+		// ).singleNodeValue;
+		// let imageElement = document.evaluate(
+		// 	imgXPath,
+		// 	newPost,
+		// 	null,
+		// 	XPathResult.FIRST_ORDERED_NODE_TYPE,
+		// 	null
+		// ).singleNodeValue;
 
-		if (videoElement) videoElement.innerHTML = "";
-		if (imageElement) imageElement.innerHTML = "";
+		// if (videoElement) videoElement.parentNode.removeChild(videoElement);
+		// if (imageElement) imageElement.parentNode.removeChild(imageElement);
 
 		// broken code - working on embedding videos
 		// if (true) {
@@ -228,23 +234,36 @@ async function injectRecommendedPosts(container) {
 		// }
 		// Assign values to the elements
 
-		pfpElement.src = post.profileImage;
-		displayNameElement.textContent = post.displayName;
-		usernameElement.textContent = post.username;
-		dateElement.textContent = new Date().toLocaleString();
-		textContentElement.textContent = post.text_content;
-		commentsElement.textContent = post.comments;
-		resharesElement.textContent = post.reshares;
-		likeElement.textContent = post.likes;
-		savedElement.textContent = post.saves;
-
-		// Add a custom event listener to a button inside the template with an aria-label of 'like'
-		let likeButton = newPost.querySelector("[aria-label='like']");
-		likeButton.addEventListener("click", function () {
-			console.log("Like button clicked");
-		});
-
-		container.appendChild(newPost);
+		if (pfpElement) pfpElement.src = post.profileImage;
+		if (displayNameElement) displayNameElement.textContent = post.displayName;
+		if (usernameElement) usernameElement.textContent = post.username;
+		if (dateElement) dateElement.textContent = new Date().toLocaleString();
+		if (textContentElement) textContentElement.textContent = post.text_content;
+		if (commentsElement) {
+			commentsElement.textContent = post.comments;
+			commentsElement.addEventListener("click", () =>
+				alert("need to handle comment button")
+			);
+		}
+		if (resharesElement) {
+			resharesElement.textContent = post.reshares;
+			resharesElement.addEventListener("click", () =>
+				alert("need to handle reshare button")
+			);
+		}
+		if (likeElement) {
+			likeElement.textContent = post.likes;
+			likeElement.addEventListener("click", () =>
+				alert("need to handle like button")
+			);
+		}
+		if (savedElement) {
+			savedElement.textContent = post.saves;
+			savedElement.addEventListener("click", () =>
+				alert("need to handle save button")
+			);
+		}
+		if (container) container.appendChild(newPost);
 	});
 }
 async function getTargetElement() {
@@ -258,10 +277,7 @@ async function getTargetElement() {
 	return targetElement.parentElement;
 }
 
-async function AddRecommendationTabButton() {
-	// 1 - create a slot next to the following/highlights for our widget button to go
-	// 1.1 - Selects the span element with inner HTML equal to "highlights" from the DOM
-
+async function addRecommendationTabButton() {
 	const buttonContainer = await getTargetElement();
 	console.log("button container", buttonContainer);
 
@@ -294,11 +310,31 @@ function createDomElement(html) {
 	const dom = new DOMParser().parseFromString(html, "text/html");
 	return dom.body.firstElementChild;
 }
-document.addEventListener("DOMContentLoaded", AddRecommendationTabButton());
-// document.addEventListener("DOMContentLoaded", function () {
-// 	var button = document.getElementById("cabal-sorel-button");
-// 	console.log("button", button);
-// 	button.addEventListener("click", async function () {
-// 		await injectRecommendedPosts();
-// 	});
-// });
+function customLikeEventListener() {
+	// This function will be called when a 'like' button is clicked
+	alert("Like button clicked!");
+}
+function addEventListenersToLikeButtons() {
+	console.log("adding like event listeners - not done");
+	// This function will loop through the document and add a custom event listener to all elements with an aria-label of "like";
+	// const likeButtons = document.querySelectorAll('[aria-label="Like"]');
+	// console.log("LIKE BUTTONS", likeButtons);
+	// if (likeButtons.length > 0) {
+	// 	likeButtons.forEach((button) => {
+	// 		button.addEventListener("click", customLikeEventListener);
+	// 	});
+	// 	alert("finished");
+	// } else {
+	// 	console.log("No like buttons found");
+	// }
+}
+console.log("Inject script running ", document.readyState);
+if (document.readyState === "loading") {
+	document.addEventListener("DOMContentLoaded", () => {
+		addRecommendationTabButton();
+		addEventListenersToLikeButtons();
+	});
+} else {
+	addRecommendationTabButton();
+	addEventListenersToLikeButtons();
+}

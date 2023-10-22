@@ -629,20 +629,20 @@ async function getTwitterAccount(publicKey) {
 	try {
 		let response = await new Promise((resolve, reject) => {
 			chrome.runtime.sendMessage(
-				{ command: "getTwitterHandle", data: { next_public_key: publicKey } },
+				{ command: "getTwitterAccount", data: { next_public_key: publicKey } },
 				(response) => {
 					resolve(response);
 				}
 			);
 		});
-		console.log("BUG", response);
+		console.log("GET TWITTER ACCOUNT", response);
 		if (response.ok) {
 			return response.data;
 		} else {
 			return false;
 		}
 	} catch (error) {
-		console.error("Error in getTwitterHandle: ", error);
+		console.error("Error in getTwitterAccount: ", error);
 		return false;
 	}
 }
