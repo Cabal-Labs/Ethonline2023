@@ -5,6 +5,7 @@ import {
 	generateTweetMessage,
 } from "./utils/setUp.mjs";
 import { doubleSignMessage, generateKeyPair } from "./utils/eth.mjs";
+import { findOneIdentityWithSource } from "./utils/graphClient.js";
 import { createButton } from "./utils/ui.js";
 
 // import ethers from "ethers";
@@ -660,6 +661,9 @@ async function generateProfileScreen(container) {
 	});
 	let logoutButton = document.getElementById("log-out-link");
 	logoutButton.addEventListener("click", logout);
+
+	let social = await findOneIdentityWithSource(account.eth_wallet_public_key)
+	
 }
 
 async function uploadTwitterHistoryToTableland(data) {
