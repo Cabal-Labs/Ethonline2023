@@ -113,12 +113,6 @@ async function getRecommendedPosts() {
 		console.error("Error:", error);
 	}
 }
-function injectScript(code) {
-	let script = document.createElement("script");
-	script.textContent = code;
-	(document.head || document.documentElement).appendChild(script);
-	script.remove();
-}
 
 async function injectRecommendedPosts(container) {
 	console.log(postTemplate);
@@ -284,7 +278,6 @@ async function getTargetElement() {
 
 async function addRecommendationTabButton() {
 	const buttonContainer = await getTargetElement();
-	console.log("button container", buttonContainer);
 
 	// Create the custom recommendation button
 	const customRecommendationButton = createDomElement(`
@@ -304,8 +297,6 @@ async function addRecommendationTabButton() {
 	button.addEventListener("click", async () => {
 		const feedContainer = document.querySelector("div > article").parentElement;
 		// the feed container is the only div on the page where it's immediate children are article tags.
-
-		console.log("feed container", feedContainer);
 		await injectRecommendedPosts(feedContainer);
 	});
 }
@@ -322,28 +313,121 @@ function customLikeEventListener() {
 function addEventListenersToLikeButtons() {
 	console.log("adding like event listeners - not done");
 	// This function will loop through the document and add a custom event listener to all elements with an aria-label of "like";
-	// const likeButtons = document.querySelectorAll('[aria-label="Like"]');
-	// console.log("LIKE BUTTONS", likeButtons);
-	// if (likeButtons.length > 0) {
-	// 	likeButtons.forEach((button) => {
-	// 		button.addEventListener("click", customLikeEventListener);
-	// 	});
-	// 	alert("finished");
-	// } else {
-	// 	console.log("No like buttons found");
-	// }
+	let buttonCollection = document.getElementsByTagName("button");
+	console.log(document.getElementsByTagName("button")[0]); // undefined
+
+	console.log("button collection", buttonCollection, buttonCollection[0]);
+	// HTMLCollection, undefined
+	let likeButtons = [];
+
+	for (let i = 0; i < buttonCollection.length; i++) {
+		let node = buttonCollection[i];
+		console.log("button", node);
+		if (node.getAttribute("aria-label") === "Like") {
+			likeButtons.push(node);
+		}
+	}
+	console.log("LIKE BUTTONS", likeButtons);
+	if (likeButtons.length > 0) {
+		likeButtons.forEach((button) => {
+			button.addEventListener("click", customLikeEventListener);
+		});
+		alert("finished");
+	} else {
+		console.log("No like buttons found");
+	}
 }
 console.log("Inject script running ", document.readyState);
 if (document.readyState === "loading") {
 	document.addEventListener("DOMContentLoaded", async () => {
 		addRecommendationTabButton();
-		addEventListenersToLikeButtons();
-		await getRecommendedPosts();
+		setupEventListeners();
+		// addEventListenersToLikeButtons();
+		// await getRecommendedPosts();
 	});
 } else {
 	addRecommendationTabButton();
-	addEventListenersToLikeButtons();
-	(async () => {
-		getRecommendedPosts();
-	})();
+	setupEventListeners();
+	// addEventListenersToLikeButtons();
+	// (async () => {
+	// 	getRecommendedPosts();
+	// })();
 }
+function addLikeButtonEventListener(container) {
+	let likeXPath = "/div[2]/div[2]/span/div[3]/button";
+	let likeElement;
+	try {
+		likeElement = document.evaluate(
+			likeXPath,
+			container,
+			null,
+			XPathResult.FIRST_ORDERED_NODE_TYPE,
+			null
+		).singleNodeValue;
+	} catch (error) {
+		console.error("Error while evaluating XPath: ", error);
+	}
+	console.log("like", likeElement);
+	// Check if likeElement is not undefined before proceeding
+	if (likeElement) {
+		// Wrap the element in a new button that will propagate the click event and also fire a custom function
+		let wrapper = document.createElement("button");
+		wrapper.style.border = "1px solid green";
+		wrapper.addEventListener("click", (event) => {
+			customLikeEventListener(event);
+			likeElement.click();
+		});
+		likeElement.parentNode.replaceChild(wrapper, likeElement);
+		wrapper.appendChild(likeElement);
+	} else {
+		console.log("likeElement is undefined");
+	}
+}
+function setupEventListeners() {
+	let articlesArray = [];
+	let previousLength = 0;
+	let noNewArticlesCount = 0;
+	setTimeout(function () {
+		let articleElements = document.getElementsByTagName("article");
+		if (articleElements.length > 0) {
+			console.log(articleElements);
+			for (let i = 0; i < articleElements.length; i++) {
+				articlesArray.push(articleElements[i]);
+			}
+		} else {
+			console.log("No articles found");
+		}
+		console.log(articlesArray);
+		console.log(articlesArray.length);
+		if (articlesArray.length > 0) {
+			// Log the post
+			articlesArray.forEach((post) => {
+				console.log("post", typeof post, post);
+				addLikeButtonEventListener(post);
+			});
+		} else {
+			// Log a message if no posts are found
+			console.log("No posts found");
+		}
+	}, 2000); // Adjust the delay to suit the page's load time
+
+	// Get all the elements that match the tag name "article"
+
+	// Check if there are any posts
+}
+
+function customLikeEventListener(event) {
+	console.log("CUSTOM CLICK");
+	console.log("event", event);
+	event.preventDefault();
+}
+// var observer = new MutationObserver(function (mutationsList, observer) {
+// 	console.log("mutation observed");
+// 	console.log(observer);
+// 	if (document.getElementsByTagName("article").length > 0) {
+// 		console.log(document.getElementsByTagName("article")[0]);
+// 		observer.disconnect(); // Stop observing once the element is found
+// 	}
+// });
+
+// observer.observe(document.body, { childList: true, subtree: true });

@@ -151,6 +151,20 @@ initDB().then((database) => {
 			// 	}
 			// });
 			return true;
+		} else if (message.command === "saveEthAddress") {
+			let data = message.data;
+			console.log("4.5 - in sw", data);
+			updateRecord(db, "account", data.nextPublicKey, {
+				...data,
+			}).then((data) => {
+				console.log("4.6 - in sw", data);
+				if (!!data) {
+					sendResponse({ ok: true, result: "Eth Address Saved" });
+				} else {
+					sendResponse({ ok: false, result: "Eth Address Not Saved" });
+				}
+			});
+			return true;
 		} else {
 			sendResponse({
 				result: "Command not recognized",
