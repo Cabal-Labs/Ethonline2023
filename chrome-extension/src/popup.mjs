@@ -86,119 +86,72 @@ async function saveTwitterHandle(handle) {
 		console.log("Private key", priv_key);
 		if (!!result) {
 			// save result
+			const post = await generateTweetMessage(result, priv_key);
+
 			console.log(result);
 			let data = {
 				publicKey: next_public_key,
 				twitter_handle: handle,
 				twitter_uuid: result.uuid,
 				twitter_createdAt: result.created_at,
+				twitter_post_content: post,
+				privateKey: priv_key,
 			};
 			console.log("data to save", data);
 			chrome.runtime.sendMessage(
 				{ command: "saveTwitterHandle", data },
-				(response) => {
+				async (response) => {
 					console.log("twitter save response ", response);
 					if (response.ok) {
+						const post = await generateTweetMessage(result, priv_key);
 						clearContainer(container);
 						generatePostConfirmationTweenScreen(container, post);
 					}
 				}
 			);
 		}
-		const post = await generateTweetMessage(result, priv_key);
-		console.log("message to post", post);
-		clearContainer(container);
-		generatePostConfirmationTweenScreen(container, post);
 	} catch (err) {
 		console.log("Error creating proof payload: ", err);
 	}
 }
 
-async function saveEthAddress(e) {
-	e.preventDefault();
+async function saveEthAddress(ethAddress) {
 
-	let ethAddress = "";
 
 	// get from idb
-	let nextPublicKey = "";
-	chrome.runtime.sendMessage({ command: "getNextPublicKey" }, (response) => {
-		console.log(response); // Should log "Account Saved"
-		if (response.ok === true) {
-			// success, render the next screen
-			nextPublicKey = response.nextPublicKey;
-		} else {
-			alert("something went wrong");
-		}
-	});
+	let account = await getNextAccount(next_public_key);
 
-	chrome.runtime.sendMessage({ command: "getNextPrivateKey" }, (response) => {
-		console.log(response); // Should log "Account Saved"
-		if (response.ok === true) {
-			// success, render the next screen
-			nextPrivateKey = response.nextPrivateKey;
-		} else {
-			alert("something went wrong");
-		}
-	});
-	chrome.runtime.sendMessage({ command: "getPrivateKey" }, (response) => {
-		console.log(response); // Should log "Account Saved"
-		if (response.ok === true) {
-			// success, render the next screen
-			walletPrivate = response.PrivateKey;
-		} else {
-			alert("something went wrong");
-		}
-	});
+	let result = await createProofPayload("ethereum", ethAddress, account);
 
-	let result = await createProofPayload("ethreum", ethAddress, nextPublicKey);
-	if (result.ok) {
-		// save result
-	}
+	console.log(result)
+
 }
 
 async function connectTwitterAccount(proofLocation) {
-	let twitterHandle = "blah";
-	let nextPublicKey = "";
-	let uuid = "";
-	let createdAt = "";
-	console.log("next_public_key on 163", next_public_key);
 	let account = await getNextAccount(next_public_key);
-	console.log("ACCOUNT", account);
-	// chrome.runtime.sendMessage({ command: "getNextPublicKey" }, (response) => {
-	// 	console.log(response); // Should log "Account Saved"
-	// 	if (response.ok === true) {
-	// 		// success, render the next screen
-	// 		nextPublicKey = response.nextPublicKey;
-	// 	} else {
-	// 		alert("something went wrong");
-	// 	}
-	// });
+	console.log("ACCOUNT IN CONNECTTWITTERACCOUNT()", account);
 
-	// let result = await createProof(
-	// 	proofLocation,
-	// 	"twitter",
-	// 	account.handle,
-	// 	next_public_key,
-	// 	(extra = {}),
-	// 	account.twitter_uuid,
-	// 	account.twitter_createdAt
-	// );
-	if (!!account) {
+	let result = await createProof(
+		proofLocation,
+		"twitter",
+		account.handle,
+		next_public_key,
+		{},
+		account.twitter_uuid,
+		account.twitter_createdAt
+	);
+	// marco todo - test the actual integration for the stuff inside this branch
+	if (result) {
 		// save result
-		let nextPrivateKey = "";
-		chrome.runtime.sendMessage({ command: "getNextPublicKey" }, (response) => {
-			if (response.ok === true) {
-				nextPrivateKey = response.nextPublicKey;
-			} else {
-				handleRender(container, 1);
-				return;
-			}
-		});
-		let twitterConfirmationProof = "blah"; //marco
+		let twitter_confirmation_proof = "blah"; //marco
 		chrome.runtime.sendMessage(
 			{
 				command: "saveTwitterConfirmationProof",
-				data: { twitterConfirmationProof, nextPrivateKey },
+				data: {
+					twitterConfirmationProof: twitter_confirmation_proof,
+					nextPublicKey: next_public_key,
+					twitter_verified: true,
+				},
 			},
 			(response) => {
 				if (response.ok) {
@@ -262,33 +215,33 @@ async function connectEthAccount(e) {
 	}
 }
 
-function setUpAccount(e) {
-	e.preventDefault();
-	console.log("setUpAccount e", e);
-	let inputValue = e.target.elements.walletAddress.value; // get the value of the private key
-	let publicAddress;
-	try {
-		publicAddress = deriveEthereumAddress(privateKey);
-	} catch (e) {
-		alert("Invalid Private Key");
-		return;
-	}
-	const privateKey = inputValue;
-	const address = publicAddress;
+// function setUpAccount(e) {
+// 	e.preventDefault();
+// 	console.log("setUpAccount e", e);
+// 	let inputValue = e.target.elements.walletAddress.value; // get the value of the private key
+// 	let publicAddress;
+// 	try {
+// 		publicAddress = deriveEthereumAddress(privateKey);
+// 	} catch (e) {
+// 		alert("Invalid Private Key");
+// 		return;
+// 	}
+// 	const privateKey = inputValue;
+// 	const address = publicAddress;
 
-	// store the result of the account setup in indexedDB
-	const accountSetUpData = {
-		nextPublicKey: next_public_key,
-		walletPrivateKey: privateKey,
-		walletAddress: address,
-	};
-	chrome.runtime.sendMessage(
-		{ command: "setUpAccount", data: accountSetUpData },
-		(response) => {
-			console.log(response); // Should log "Account Saved"
-		}
-	);
-}
+// 	// store the result of the account setup in indexedDB
+// 	const accountSetUpData = {
+// 		nextPublicKey: next_public_key,
+// 		walletPrivateKey: privateKey,
+// 		walletAddress: address,
+// 	};
+// 	chrome.runtime.sendMessage(
+// 		{ command: "setUpAccount", data: accountSetUpData },
+// 		(response) => {
+// 			console.log(response); // Should log "Account Saved"
+// 		}
+// 	);
+// }
 export function logout(e) {
 	chrome.runtime.sendMessage({ command: "clearIDB" }, (response) => {
 		console.log("clearIDB: in popup", response);
@@ -330,8 +283,13 @@ function clearContainer(container) {
 // --------- UI Generation -----------
 function generateWelcomeScreen(container) {
 	container.innerHTML = /*html*/ `
-		<p style="font-size: 20px; font-family: Radjifani, Helvetica, sans-serif;">Welcome! This extension allows you to manage your Cabal Sorel account. Please enter your wallet's private address below.</p>
-		<button id="get-started-btn" class="cabal-btn primary">Get Started</button>
+		<h1 class="page-title">Welcome!</h1>
+		<h2 class="page-subtitle" style="padding-bottom: 20px;">This extension give you better recommendations for web3 socials sites.</h2>
+		<button id="get-started-btn" class="cabal-btn primary">
+			<span>
+				Get Started
+			</span>
+		</button>
 	`;
 	let button = document.getElementById("get-started-btn");
 	button.addEventListener("click", () => {
@@ -342,9 +300,9 @@ function generateWelcomeScreen(container) {
 
 function generateNextIDIntegrationScreen(container) {
 	container.innerHTML = /*html*/ `
-		<h3 class="page-title" style="flex:0" >First, Create a Next.ID</h3> 
-		<h6 class="page-subtitle" style="flex:0">It only takes 1 click!</h6>
-		<button class="btn" id="next-id-btn" style="width: 250px">Create Next.ID</button>
+		<h1 class="page-title">First, Create a Next.ID</h1> 
+		<h2 class="page-subtitle" style="padding-bottom: 20px;" >It only takes 1 click!</h2>
+		<button class="cabal-btn" id="next-id-btn"><span>Create Next.ID</span></button>
 	`;
 	let button = document.getElementById("next-id-btn");
 	button.addEventListener("click", () => createNextId());
@@ -399,10 +357,13 @@ function generatePostConfirmationTweenScreen(container, message) {
 			${message}
 			</p>
 		</div>
-		<button id="twitter-confirm-clipboard-btn" type="button" class="cabal-btn primary" aria-label="Copy Confirmation Message To Clipboard">
-		   <span id="twitter-confirm-clipboard-btn-text">Copy to Clipboard</span>
+		<div style="display:flex; justify-content:space-between">
+
+		<button  id="twitter-confirm-clipboard-btn" type="button" class="cabal-btn primary" aria-label="Copy Confirmation Message To Clipboard">
+		   <span id="twitter-confirm-clipboard-btn-text">Copy to Clipboard</span>											
 		</button>
-		<a class="link" id="just-posted">Ok, I just posted</a>
+		<a class="link" id="just-posted"><span>Ok, I just posted</span></a>
+	</div>
 	</div>
 
 	`;
@@ -464,6 +425,8 @@ function generateAcceptTwitterLinkScreen(container) {
 				console.log("locationId", locationId);
 				let result = await connectTwitterAccount(locationId);
 				console.log("connectTwitterAccount", result);
+				clearContainer(container);
+				generateImportWallet(container);
 			} else {
 				alert("Invalid URL provided");
 				return;
@@ -487,7 +450,7 @@ function generateImportWallet(container) {
 			<input type="text" id="private-key-input" name="walletAddress" class="clear-input" placeholder="Enter your wallet's private address here">
 			<button id="import-key-btn" class="cabal-btn primary" type="submit">
 			<span>
-			Paste Private Key
+			Import
 			</span>
 			</button>
 		</form>
@@ -505,7 +468,7 @@ function generateImportWallet(container) {
 			button.disabled = true;
 		}
 	});
-	form.addEventListener("submit", (e) => {
+	form.addEventListener("submit", async (e) => {
 		e.preventDefault();
 		console.log(e);
 		let key = e.target[0].value;
@@ -513,8 +476,8 @@ function generateImportWallet(container) {
 			return;
 		} else {
 			// handle submit
-			saveEthAddress(key);
-			saved = true;
+			await saveEthAddress(key);
+			let saved = true;
 			if (saved) {
 				clearContainer(container);
 				generateSuccessfulWalletImport(container);
@@ -539,56 +502,20 @@ function generateSuccessfulWalletImport(container) {
 		generateProfileScreen(container);
 	});
 }
-function generateProfileScreen(container) {
+function generateHomeScreen(container) {
 	let walletAddress = "0x1234...567"; //todo: fetch public address;
+	let extensionEnabled = false;
 	container.innerHTML =
 		/* html */
 		`
+		<a  href="#" id="profile-link">My Profile</a>
 		<div class="profile-sub-header">
 		<div id="pfp" ></div>
 		<h3>${walletAddress}</h3>
-		<a  href="#" id="home-link">Home</a>
 		</div>
-		<div class="profile-grid-item" id="next-id-grid-item">Next Id Connected</div>
-		<div class="profile-grid-item" id="twitter-grid-item">Twitter Connected</div>
-		<div class="profile-grid-item" id="lens-grid-item">Lens Connected</div>
-		<div class="profile-grid-item" id="more-integrations-grid-item">More Integrations</div>
-	`;
-	let home = document.getElementById("home-link");
-	home.addEventListener("click", () => {
-		clearContainer(container);
-		generateHomeScreen(container);
-	});
-}
-function generateHomeScreen(container) {
-	let currentSite = "hey.xyz";
-	let extensionEnabled = false;
-	let walletAddress = "0x1234...5678";
-	container.innerHTML = /*html*/ `
-	<div class="home-sub-header" style="display: flex;align-items:center; flex-direction: row; justify-content: flex-start">
-		<div id="pfp"></div>
-		<div>
-		<h3>${walletAddress}</h3>
-		<div>Current Site: ${currentSite}</div>
-		</div>
-		<a href="#" id="profile-link">Profile</a>
-	</div>
-	<div class="integration-container">
-		<div class="integration-square" id="nextid">
-		<span class="title">Next.ID</span>
-		</div>
-		<div class="integration-square" id="twitter">
-		<span class="title">Twitter</span>
-		</div>
-		<div class="integration-square" id="lens">
-		<span class="title">Lens</span></div>
-	</div>
- 	<div id="more-integrations">
-		<span>More Integrations</span>
-	</div>
-	<button class="cabal-btn" id="activate-btn">${
-		extensionEnabled ? "Deactivate Extension" : "Activate Extension"
-	}</button>
+		<button class="cabal-btn" id="activate-btn">${
+			extensionEnabled ? "Deactivate Extension" : "Activate Extension"
+		}</button>
 	`;
 	let button = document.getElementById("activate-btn");
 	button.addEventListener("click", () => {
@@ -604,6 +531,45 @@ function generateHomeScreen(container) {
 	profile.addEventListener("click", () => {
 		clearContainer(container);
 		generateProfileScreen(container);
+	});
+}
+function generateProfileScreen(container) {
+	let currentSite = "hey.xyz";
+	let walletAddress = "0x1234...5678";
+	container.innerHTML = /*html*/ `
+	<a href="#" id="home-link">Home</a>
+	<div class="home-sub-header" style="display: flex;align-items:center; flex-direction: row; justify-content: flex-start">
+		<div id="pfp"></div>
+		<div>
+		<h3>${walletAddress}</h3>
+		<div>Current Site: ${currentSite}</div>
+		</div>
+	</div>
+	<div class="integration-container">
+		<div class="integration-square" id="nextid">
+		<img src="../img/nextid.png" />
+		<span class="title">Next.ID</span>
+		</div>
+		<div class="integration-square" id="twitter">
+		<img src="../img/twitter.png" />
+		<span class="title">Twitter</span>
+		</div>
+		<div class="integration-square" id="lens">
+		<img src="../img/lens.png" />
+		<span class="title">Lens</span></div>
+		<div class="integration-square" id="eth">
+		<img src="../img/Ethereum.png" />
+		<span class="title">Wallet</span></div>
+	</div>
+ 	<div id="more-integrations">
+		<span>More Integrations</span>
+	</div>
+	`;
+
+	let home = document.getElementById("home-link");
+	home.addEventListener("click", () => {
+		clearContainer(container);
+		generateHomeScreen(container);
 	});
 }
 function handleRender(container, navIndex) {
@@ -632,82 +598,95 @@ function handleRender(container, navIndex) {
 		container.innerHTML = /* html */ `<div>Error</div>`;
 	}
 }
+async function getTwitterAccount(publicKey) {
+	try {
+		let response = await new Promise((resolve, reject) => {
+			chrome.runtime.sendMessage(
+				{ command: "getTwitterAccount", data: { next_public_key: publicKey } },
+				(response) => {
+					resolve(response);
+				}
+			);
+		});
+		console.log("GET TWITTER ACCOUNT", response);
+		if (response.ok) {
+			return response.data;
+		} else {
+			return false;
+		}
+	} catch (error) {
+		console.error("Error in getTwitterAccount: ", error);
+		return false;
+	}
+}
+async function getTwitterConfirmationProofAsync(publicKey) {
+	try {
+		let response = await new Promise((resolve, reject) => {
+			chrome.runtime.sendMessage(
+				{
+					command: "getTwitterConfirmationProof",
+					data: { next_public_key: publicKey },
+				},
+				(response) => {
+					resolve(response);
+				}
+			);
+		});
+		console.log("BUG2", response);
+		if (response.ok) {
+			return {
+				twitterConfirmationProof: response.twitterConfirmationProof,
+				twitterVerified: response.twitterVerified,
+			};
+		} else {
+			let message = response.message;
+			generatePostConfirmationTweenScreen(container, message);
+		}
+	} catch (error) {
+		console.error("Error in getTwitterConfirmationProofAsync: ", error);
+		return false;
+	}
+}
 document.addEventListener("DOMContentLoaded", async function () {
-	let account_exists = await checkForExistingAccount();
-	console.log("account exists", account_exists);
-
-	// derive the nav index from the state of the account
-	// if no private key exists in next_account -> show welcome screen
-	// if a private key exists but there is no twitter stored in idb -> show them get twitter handle screen
-	// if a ... a twitter handle is stored but not verified -> show them verify twitter screen
-	// if a ... twitter is verified, but no wallet exists -> show them link wallet screen
-	// if a ... wallet exists in account idb -> show them completed account screen / home screen
-	if (!account_exists) {
+	let twitterConfirmationProof;
+	let twitterVerified;
+	let account = await checkForExistingAccount();
+	if (!account) {
+		console.log("no account found");
 		handleRender(container, 0);
 		return;
-	} else {
-		// get the whole db and find the 1 public key that exists
 	}
-	chrome.runtime.sendMessage({ command: "getNextAccount" }, (response) => {
-		console.log(response);
-		if (response.ok === true) {
-			console.log("next private key response", response);
-			next_private_key = response.nextPrivateKey;
-			next_public_key = response.nextPrivateKey;
-		} else {
-			handleRender(container, 1);
+	console.log(account);
+	if (!!account.publicKey && !!account.privateKey) {
+		next_public_key = account.publicKey;
+		next_private_key = account.privateKey;
+		console.log("next_public_key", next_public_key);
+		let twitterAccount = await getTwitterAccount(next_public_key);
+		console.log("twitter", twitterAccount);
+		if (!twitterAccount.twitter_handle) {
+			console.log("here");
+			generateConnectTwitterScreen(container);
 			return;
-		}
-	});
-	console.log(next_private_key);
-	console.log(next_public_key);
-	let twitterHandle;
-	if (!!next_public_key) {
-		chrome.runtime.sendMessage(
-			{ command: "getTwitterHandle", data: { next_public_key } },
-			(response) => {
-				if (response.ok) {
-					twitterHandle = response.twitterHandle;
-				} else {
-					handleRender(container, 2);
-					return;
-				}
+		} else if (!twitterAccount.twitter_verified) {
+			// if there's a twitter handle but no confirmation
+			console.log("twitter found");
+			generatePostConfirmationTweenScreen(
+				container,
+				twitterAccount.twitter_post_content
+			);
+			return;
+		} else {
+			if (!!account.ethPublicKey) {
+				generateProfileScreen(container);
+				return;
+			} else {
+				generateImportWallet(container);
+				return;
 			}
-		);
+		}
+	} else {
+		console.log("we fucked up");
 	}
-	// let twitterConfirmationProof;
-	// if (!!twitterHandle) {
-	// 	// todo pass private key to this function
-	// 	chrome.runtime.sendMessage(
-	// 		{ command: "getTwitterConfirmationProof", data: { privateKey } },
-	// 		(response) => {
-	// 			if (response.ok) {
-	// 				twitterConfirmationProof = response.twitterConfirmationProof;
-	// 			} else {
-	// 				handleRender(container, 3);
-	// 			}
-	// 		}
-	// 	);
-	// }
-
-	// let walletAddress = "";
-	// if (!!twitterConfirmationProof) {
-	// 	// render connect wallet screen
-	// 	// check for a wallet address from the IDB
-	// 	walletAddress = "0x12345";
-	// 	handleRender(container, 4);
-	// }
-	// if (!!walletAddress) {
-	// 	// they have an account, just show them the home screen
-	// 	handleRender(container, 7);
-	// }
-	// handleRender(container, navIndex);
-	// generateNextIDIntegrationScreen(container);
-	//generateConnectTwitterScreen(container);
-	// generatePostConfirmationTweenScreen(container);
-	// generateImportWallet(container);
-	// generateProfileScreen(container);
-	//generateHomeScreen(container);
 });
 let logoutButton = document.getElementById("log-out-btn");
 logoutButton.addEventListener("click", logout);

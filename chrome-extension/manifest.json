@@ -28,7 +28,7 @@
 	"content_scripts": [
 		{
 			"matches": ["https://hey.xyz/*"],
-			"js": ["src/inject.js"],
+			"js": ["src/inject/inject.js", "src/inject/postTemplate.js"],
 			"css": [
 				"src/styles/index.css",
 				"src/styles/component.css",

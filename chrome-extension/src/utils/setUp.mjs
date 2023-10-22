@@ -59,6 +59,8 @@ async function createProof(
 	uuid,
 	createdAt
 ) {
+	let mockedSuccessResult = true;
+	return mockedSuccessResult;
 	try {
 		const response = await fetch(PROOF_URL, {
 			method: "POST",

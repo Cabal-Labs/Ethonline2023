@@ -49,6 +49,7 @@ initDB().then((database) => {
 		if (message.command === "setUpNextAccount") {
 			console.log("HERE");
 			let data = message.data;
+			console.log("setup account in sw", data);
 			storeValue(db, "account", data.publicKey, {
 				privateKey: data.privateKey,
 			})
@@ -81,15 +82,24 @@ initDB().then((database) => {
 				twitter_handle: data.twitter_handle,
 				twitter_uuid: data.twitter_uuid,
 				twitter_createdAt: data.twitter_createdAt,
+				twitter_post_content: data.twitter_post_content,
+				privateKey: data.privateKey,
 			}).then((data) => {
 				sendResponse({ ok: true, result: "Twitter Handle Saved" });
 			});
 			return true;
 		}
 
-		if (message.command === "getTwitterHandle") {
-			getValue(db, "account", data.id).then((data) => {
-				console.log(data);
+		if (message.command === "getTwitterAccount") {
+			let data = message.data;
+			getValue(db, "account", data.next_public_key).then((data) => {
+				console.log("get twitter handle in sw", data);
+				if (!!data) {
+					sendResponse({ ok: true, data });
+				} else {
+					console.log("no twitter handle");
+					sendResponse({ ok: false });
+				}
 			});
 			// getIDB(db, "account").then((data) => {
 			// 	console.log(data);
@@ -103,8 +113,9 @@ initDB().then((database) => {
 		}
 		if (message.command === "saveTwitterConfirmationProof") {
 			let data = message.data;
-			storeValue(db, "account", data.privateKey, {
-				twitterConfirmationProof: data.twitterConfirmationProof,
+			updateRecord(db, "account", data.nextPublicKey, {
+				twitter_confirmation_proof: data.twitterConfirmationProof,
+				twitter_verified: data.twitter_verified,
 			}).then((data) => {
 				sendResponse({ result: "Twitter Confirmation Proof Saved" });
 			});
@@ -112,17 +123,33 @@ initDB().then((database) => {
 		}
 
 		if (message.command === "getTwitterConfirmationProof") {
-			getIDB(db, "account").then((data) => {
-				console.log(data);
-				if (data) {
+			let data = message.data;
+			getValue(db, "account", data.next_public_key).then((data) => {
+				console.log("getTwitterConfirmationProof in sw", data);
+				if (data.twitterConfirmationProof) {
 					sendResponse({
 						ok: true,
-						twitterConfirmationProof: data.twitterConfirmationProof,
+						twitter_verified: data.twitterVerified,
+						twitter_confirmation_proof: data.twitterConfirmationProof,
 					});
 				} else {
-					sendResponse({ ok: false });
+					sendResponse({
+						ok: false,
+						message: data.twitter_post_content,
+					});
 				}
 			});
+			// getIDB(db, "account").then((data) => {
+			// 	console.log(data);
+			// 	if (data) {
+			// 		sendResponse({
+			// 			ok: true,
+			// 			twitterConfirmationProof: data.twitterConfirmationProof,
+			// 		});
+			// 	} else {
+			// 		sendResponse({ ok: false });
+			// 	}
+			// });
 			return true;
 		} else {
 			sendResponse({
@@ -235,18 +262,22 @@ function updateRecord(db, storeName, key, value) {
 	return new Promise((resolve, reject) => {
 		const transaction = db.transaction([storeName], "readwrite");
 		const objectStore = transaction.objectStore(storeName);
-		const request = objectStore.put({ ...value, publicKey: key });
+		objectStore.get(key).onsuccess = function (event) {
+			let data = event.target.result;
+			let updatedData = { ...data, ...value };
+			const request = objectStore.put(updatedData);
 
-		request.onsuccess = function (event) {
-			console.log("Successfully updated data in IndexedDB database");
-			resolve(request.result);
-		};
-		request.onerror = function (event) {
-			console.error(
-				"Failed to update data in IndexedDB database",
-				event.target.error
-			);
-			reject(event.target.error);
+			request.onsuccess = function (event) {
+				console.log("Successfully updated data in IndexedDB database");
+				resolve(request.result);
+			};
+			request.onerror = function (event) {
+				console.error(
+					"Failed to update data in IndexedDB database",
+					event.target.error
+				);
+				reject(event.target.error);
+			};
 		};
 	});
 }
