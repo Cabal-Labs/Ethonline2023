@@ -5,6 +5,8 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import explode, col
 from pyspark.ml.feature import IndexToString
 import os
+import requests
+import json
 
 app = Flask(__name__)
 
@@ -29,6 +31,372 @@ spark = SparkSession.builder.appName("recommend") \
 model = ALSModel.load("weights")
 user_indexer = StringIndexerModel.load("user_model")
 post_indexer = StringIndexerModel.load("post_model")
+
+
+def run_query(pub):
+    headers = {'Content-Type': 'application/json'}
+
+    built_query = create_query(pub)
+
+    print(built_query)
+    request = requests.post('https://api.lens.dev/',
+                            json={'query': built_query}, headers=headers)
+
+    if request.status_code == 200:
+        return request.json()
+    else:
+        raise Exception("Query failed to run by returning code of {}. {}".format(
+            request.status_code))
+
+
+# The GraphQL query (with a few admissible variables)
+def create_query(publication_id):
+    query = """
+	query Publication {
+	publication(request: {
+		publicationId: \"""" + publication_id + """\"
+	}) {
+	__typename 
+		... on Post {
+		...PostFields
+		}
+		... on Comment {
+		...CommentFields
+		}
+		... on Mirror {
+		...MirrorFields
+		}
+	}
+	}
+
+	fragment MediaFields on Media {
+	url
+	mimeType
+	}
+
+	fragment ProfileFields on Profile {
+	id
+	name
+	bio
+	attributes {
+		displayType
+		traitType
+		key
+		value
+	}
+	isFollowedByMe
+	isFollowing(who: null)
+	followNftAddress
+	metadata
+	isDefault
+	handle
+	picture {
+		... on NftImage {
+		contractAddress
+		tokenId
+		uri
+		verified
+		}
+		... on MediaSet {
+		original {
+			...MediaFields
+		}
+		}
+	}
+	coverPicture {
+		... on NftImage {
+		contractAddress
+		tokenId
+		uri
+		verified
+		}
+		... on MediaSet {
+		original {
+			...MediaFields
+		}
+		}
+	}
+	ownedBy
+	dispatcher {
+		address
+	}
+	stats {
+		totalFollowers
+		totalFollowing
+		totalPosts
+		totalComments
+		totalMirrors
+		totalPublications
+		totalCollects
+	}
+	followModule {
+		...FollowModuleFields
+	}
+	}
+
+	fragment PublicationStatsFields on PublicationStats { 
+	totalAmountOfMirrors
+	totalAmountOfCollects
+	totalAmountOfComments
+	totalUpvotes
+	}
+
+	fragment MetadataOutputFields on MetadataOutput {
+	name
+	description
+	content
+	media {
+		original {
+		...MediaFields
+		}
+	}
+	attributes {
+		displayType
+		traitType
+		value
+	}
+	}
+
+	fragment Erc20Fields on Erc20 {
+	name
+	symbol
+	decimals
+	address
+	}
+
+	fragment PostFields on Post {
+	id
+	profile {
+		...ProfileFields
+	}
+	stats {
+		...PublicationStatsFields
+	}
+	metadata {
+		...MetadataOutputFields
+	}
+	createdAt
+	collectModule {
+		...CollectModuleFields
+	}
+	referenceModule {
+		...ReferenceModuleFields
+	}
+	appId
+	hidden
+	reaction(request: null)
+	mirrors(by: null)
+	hasCollectedByMe
+	}
+
+	fragment MirrorBaseFields on Mirror {
+	id
+	profile {
+		...ProfileFields
+	}
+	stats {
+		...PublicationStatsFields
+	}
+	metadata {
+		...MetadataOutputFields
+	}
+	createdAt
+	collectModule {
+		...CollectModuleFields
+	}
+	referenceModule {
+		...ReferenceModuleFields
+	}
+	appId
+	hidden
+	reaction(request: null)
+	hasCollectedByMe
+	}
+
+	fragment MirrorFields on Mirror {
+	...MirrorBaseFields
+	mirrorOf {
+	... on Post {
+		...PostFields          
+	}
+	... on Comment {
+		...CommentFields          
+	}
+	}
+	}
+
+	fragment CommentBaseFields on Comment {
+	id
+	profile {
+		...ProfileFields
+	}
+	stats {
+		...PublicationStatsFields
+	}
+	metadata {
+		...MetadataOutputFields
+	}
+	createdAt
+	collectModule {
+		...CollectModuleFields
+	}
+	referenceModule {
+		...ReferenceModuleFields
+	}
+	appId
+	hidden
+	reaction(request: null)
+	mirrors(by: null)
+	hasCollectedByMe
+	}
+
+	fragment CommentFields on Comment {
+	...CommentBaseFields
+	mainPost {
+		... on Post {
+		...PostFields
+		}
+		... on Mirror {
+		...MirrorBaseFields
+		mirrorOf {
+			... on Post {
+			...PostFields          
+			}
+			... on Comment {
+			...CommentMirrorOfFields        
+			}
+		}
+		}
+	}
+	}
+
+	fragment CommentMirrorOfFields on Comment {
+	...CommentBaseFields
+	mainPost {
+		... on Post {
+		...PostFields
+		}
+		... on Mirror {
+		...MirrorBaseFields
+		}
+	}
+	}
+
+	fragment FollowModuleFields on FollowModule {
+	... on FeeFollowModuleSettings {
+		type
+		amount {
+		asset {
+			name
+			symbol
+			decimals
+			address
+		}
+		value
+		}
+		recipient
+	}
+	... on ProfileFollowModuleSettings {
+		type
+		contractAddress
+	}
+	... on RevertFollowModuleSettings {
+		type
+		contractAddress
+	}
+	... on UnknownFollowModuleSettings {
+		type
+		contractAddress
+		followModuleReturnData
+	}
+	}
+
+	fragment CollectModuleFields on CollectModule {
+	__typename
+	... on FreeCollectModuleSettings {
+		type
+		followerOnly
+		contractAddress
+	}
+	... on FeeCollectModuleSettings {
+		type
+		amount {
+		asset {
+			...Erc20Fields
+		}
+		value
+		}
+		recipient
+		referralFee
+	}
+	... on LimitedFeeCollectModuleSettings {
+		type
+		collectLimit
+		amount {
+		asset {
+			...Erc20Fields
+		}
+		value
+		}
+		recipient
+		referralFee
+	}
+	... on LimitedTimedFeeCollectModuleSettings {
+		type
+		collectLimit
+		amount {
+		asset {
+			...Erc20Fields
+		}
+		value
+		}
+		recipient
+		referralFee
+		endTimestamp
+	}
+	... on RevertCollectModuleSettings {
+		type
+	}
+	... on TimedFeeCollectModuleSettings {
+		type
+		amount {
+		asset {
+			...Erc20Fields
+		}
+		value
+		}
+		recipient
+		referralFee
+		endTimestamp
+	}
+	... on UnknownCollectModuleSettings {
+		type
+		contractAddress
+		collectModuleReturnData
+	}
+	}
+
+	fragment ReferenceModuleFields on ReferenceModule {
+	... on FollowOnlyReferenceModuleSettings {
+		type
+		contractAddress
+	}
+	... on UnknownReferenceModuleSettings {
+		type
+		contractAddress
+		referenceModuleReturnData
+	}
+	... on DegreesOfSeparationReferenceModuleSettings {
+		type
+		contractAddress
+		commentsRestricted
+		mirrorsRestricted
+		degreesOfSeparation
+	}
+	}
+
+    """
+    return query
 
 
 @app.route('/recommend', methods=['POST'])
@@ -63,24 +431,42 @@ def recommend():
     index_to_string = IndexToString(
         inputCol="postIdIndex", outputCol="originalPostId", labels=post_indexer.labels)
 
-
-
     print("transforming...")
     # Apply the post_indexer's inverse transformation
     recs_df = index_to_string.transform(recs_df)
 
     print("transformed")
     recs_df.show(5)
-    
-    
 
-    
     array_from_column = [row['originalPostId'] for row in recs_df.collect()]
 
-
+    results = []
+    for item in array_from_column:
+        result = run_query(item)
+        results.append(result)
 
     # Convert the DataFrame to JSON and return
-    return array_from_column
+    return results
+
+
+@app.route('/names', methods=['POST'])
+def names():
+
+    a = [
+        "0x015fc9-0xee",
+        "0x01aa6a-0x54",
+        "0x0136a4-0x0104",
+        "0x01bd22-0x2b",
+        "0x0f6a-0xee"
+    ]
+
+    results = []
+    for item in a:
+        result = run_query(item)
+        results.append(result)
+
+    # Convert the DataFrame to JSON and return
+    return results
 
 
 if __name__ == '__main__':
