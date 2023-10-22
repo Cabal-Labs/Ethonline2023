@@ -86,17 +86,21 @@ async function saveTwitterHandle(handle) {
 		console.log("Private key", priv_key);
 		if (!!result) {
 			// save result
+			const post = await generateTweetMessage(result, priv_key);
+
 			console.log(result);
 			let data = {
 				publicKey: next_public_key,
 				twitter_handle: handle,
 				twitter_uuid: result.uuid,
 				twitter_createdAt: result.created_at,
+				twitter_post_content: post,
+				privateKey: priv_key,
 			};
 			console.log("data to save", data);
 			chrome.runtime.sendMessage(
 				{ command: "saveTwitterHandle", data },
-				(response) => {
+				async (response) => {
 					console.log("twitter save response ", response);
 					if (response.ok) {
 						clearContainer(container);
@@ -105,10 +109,6 @@ async function saveTwitterHandle(handle) {
 				}
 			);
 		}
-		const post = await generateTweetMessage(result, priv_key);
-		console.log("message to post", post);
-		clearContainer(container);
-		generatePostConfirmationTweenScreen(container, post);
 	} catch (err) {
 		console.log("Error creating proof payload: ", err);
 	}
@@ -157,49 +157,30 @@ async function saveEthAddress(e) {
 }
 
 async function connectTwitterAccount(proofLocation) {
-	let twitterHandle = "blah";
-	let nextPublicKey = "";
-	let uuid = "";
-	let createdAt = "";
-	console.log("next_public_key on 163", next_public_key);
 	let account = await getNextAccount(next_public_key);
-	console.log("ACCOUNT", account);
-	// chrome.runtime.sendMessage({ command: "getNextPublicKey" }, (response) => {
-	// 	console.log(response); // Should log "Account Saved"
-	// 	if (response.ok === true) {
-	// 		// success, render the next screen
-	// 		nextPublicKey = response.nextPublicKey;
-	// 	} else {
-	// 		alert("something went wrong");
-	// 	}
-	// });
+	console.log("ACCOUNT IN CONNECTTWITTERACCOUNT()", account);
 
-	// let result = await createProof(
-	// 	proofLocation,
-	// 	"twitter",
-	// 	account.handle,
-	// 	next_public_key,
-	// 	(extra = {}),
-	// 	account.twitter_uuid,
-	// 	account.twitter_createdAt
-	// );
+	let result = await createProof(
+		proofLocation,
+		"twitter",
+		account.handle,
+		next_public_key,
+		{},
+		account.twitter_uuid,
+		account.twitter_createdAt
+	);
 	// marco todo - test the actual integration for the stuff inside this branch
-	if (false) {
+	if (result) {
 		// save result
-		let nextPrivateKey = "";
-		chrome.runtime.sendMessage({ command: "getNextPublicKey" }, (response) => {
-			if (response.ok === true) {
-				nextPrivateKey = response.nextPublicKey;
-			} else {
-				handleRender(container, 1);
-				return;
-			}
-		});
-		let twitterConfirmationProof = "blah"; //marco
+		let twitter_confirmation_proof = "blah"; //marco
 		chrome.runtime.sendMessage(
 			{
 				command: "saveTwitterConfirmationProof",
-				data: { twitterConfirmationProof, nextPrivateKey },
+				data: {
+					twitterConfirmationProof: twitter_confirmation_proof,
+					nextPublicKey: next_public_key,
+					twitter_verified: true,
+				},
 			},
 			(response) => {
 				if (response.ok) {
@@ -263,33 +244,33 @@ async function connectEthAccount(e) {
 	}
 }
 
-function setUpAccount(e) {
-	e.preventDefault();
-	console.log("setUpAccount e", e);
-	let inputValue = e.target.elements.walletAddress.value; // get the value of the private key
-	let publicAddress;
-	try {
-		publicAddress = deriveEthereumAddress(privateKey);
-	} catch (e) {
-		alert("Invalid Private Key");
-		return;
-	}
-	const privateKey = inputValue;
-	const address = publicAddress;
+// function setUpAccount(e) {
+// 	e.preventDefault();
+// 	console.log("setUpAccount e", e);
+// 	let inputValue = e.target.elements.walletAddress.value; // get the value of the private key
+// 	let publicAddress;
+// 	try {
+// 		publicAddress = deriveEthereumAddress(privateKey);
+// 	} catch (e) {
+// 		alert("Invalid Private Key");
+// 		return;
+// 	}
+// 	const privateKey = inputValue;
+// 	const address = publicAddress;
 
-	// store the result of the account setup in indexedDB
-	const accountSetUpData = {
-		nextPublicKey: next_public_key,
-		walletPrivateKey: privateKey,
-		walletAddress: address,
-	};
-	chrome.runtime.sendMessage(
-		{ command: "setUpAccount", data: accountSetUpData },
-		(response) => {
-			console.log(response); // Should log "Account Saved"
-		}
-	);
-}
+// 	// store the result of the account setup in indexedDB
+// 	const accountSetUpData = {
+// 		nextPublicKey: next_public_key,
+// 		walletPrivateKey: privateKey,
+// 		walletAddress: address,
+// 	};
+// 	chrome.runtime.sendMessage(
+// 		{ command: "setUpAccount", data: accountSetUpData },
+// 		(response) => {
+// 			console.log(response); // Should log "Account Saved"
+// 		}
+// 	);
+// }
 export function logout(e) {
 	chrome.runtime.sendMessage({ command: "clearIDB" }, (response) => {
 		console.log("clearIDB: in popup", response);
@@ -644,84 +625,95 @@ function handleRender(container, navIndex) {
 		container.innerHTML = /* html */ `<div>Error</div>`;
 	}
 }
+async function getTwitterAccount(publicKey) {
+	try {
+		let response = await new Promise((resolve, reject) => {
+			chrome.runtime.sendMessage(
+				{ command: "getTwitterHandle", data: { next_public_key: publicKey } },
+				(response) => {
+					resolve(response);
+				}
+			);
+		});
+		console.log("BUG", response);
+		if (response.ok) {
+			return response.data;
+		} else {
+			return false;
+		}
+	} catch (error) {
+		console.error("Error in getTwitterHandle: ", error);
+		return false;
+	}
+}
+async function getTwitterConfirmationProofAsync(publicKey) {
+	try {
+		let response = await new Promise((resolve, reject) => {
+			chrome.runtime.sendMessage(
+				{
+					command: "getTwitterConfirmationProof",
+					data: { next_public_key: publicKey },
+				},
+				(response) => {
+					resolve(response);
+				}
+			);
+		});
+		console.log("BUG2", response);
+		if (response.ok) {
+			return {
+				twitterConfirmationProof: response.twitterConfirmationProof,
+				twitterVerified: response.twitterVerified,
+			};
+		} else {
+			let message = response.message;
+			generatePostConfirmationTweenScreen(container, message);
+		}
+	} catch (error) {
+		console.error("Error in getTwitterConfirmationProofAsync: ", error);
+		return false;
+	}
+}
 document.addEventListener("DOMContentLoaded", async function () {
-	// marco todo: - this function needs to determine which screen to show first based on what is stored in IDB
-	// handleRender(container, navIndex);
-	generateNextIDIntegrationScreen(container);
-	// generateConnectTwitterScreen(container);
-	// generatePostConfirmationTweenScreen(container, "message");
-	// generateImportWallet(container);
-	// generateProfileScreen(container);
-	// generateHomeScreen(container);
-	return;
-	let account_exists = await checkForExistingAccount();
-	console.log("account exists", account_exists);
-
-	// derive the nav index from the state of the account
-	// if no private key exists in next_account -> show welcome screen
-	// if a private key exists but there is no twitter stored in idb -> show them get twitter handle screen
-	// if a ... a twitter handle is stored but not verified -> show them verify twitter screen
-	// if a ... twitter is verified, but no wallet exists -> show them link wallet screen
-	// if a ... wallet exists in account idb -> show them completed account screen / home screen
-	if (!account_exists) {
+	let twitterConfirmationProof;
+	let twitterVerified;
+	let account = await checkForExistingAccount();
+	if (!account) {
+		console.log("no account found");
 		handleRender(container, 0);
 		return;
-	} else {
-		// get the whole db and find the 1 public key that exists
 	}
-	chrome.runtime.sendMessage({ command: "getNextAccount" }, (response) => {
-		console.log(response);
-		if (response.ok === true) {
-			console.log("next private key response", response);
-			next_private_key = response.nextPrivateKey;
-			next_public_key = response.nextPrivateKey;
-		} else {
-			handleRender(container, 1);
+	console.log(account);
+	if (!!account.publicKey && !!account.privateKey) {
+		next_public_key = account.publicKey;
+		next_private_key = account.privateKey;
+		console.log("next_public_key", next_public_key);
+		let twitterAccount = await getTwitterAccount(next_public_key);
+		console.log("twitter", twitterAccount);
+		if (!twitterAccount.twitter_handle) {
+			console.log("here");
+			generateConnectTwitterScreen(container);
 			return;
-		}
-	});
-	console.log(next_private_key);
-	console.log(next_public_key);
-	let twitterHandle;
-	if (!!next_public_key) {
-		chrome.runtime.sendMessage(
-			{ command: "getTwitterHandle", data: { next_public_key } },
-			(response) => {
-				if (response.ok) {
-					twitterHandle = response.twitterHandle;
-				} else {
-					handleRender(container, 2);
-					return;
-				}
+		} else if (!twitterAccount.twitter_verified) {
+			// if there's a twitter handle but no confirmation
+			console.log("twitter found");
+			generatePostConfirmationTweenScreen(
+				container,
+				twitterAccount.twitter_post_content
+			);
+			return;
+		} else {
+			if (!!account.ethPublicKey) {
+				generateProfileScreen(container);
+				return;
+			} else {
+				generateImportWallet(container);
+				return;
 			}
-		);
+		}
+	} else {
+		console.log("we fucked up");
 	}
-	// let twitterConfirmationProof;
-	// if (!!twitterHandle) {
-	// 	// todo pass private key to this function
-	// 	chrome.runtime.sendMessage(
-	// 		{ command: "getTwitterConfirmationProof", data: { privateKey } },
-	// 		(response) => {
-	// 			if (response.ok) {
-	// 				twitterConfirmationProof = response.twitterConfirmationProof;
-	// 			} else {
-	// 				handleRender(container, 3);
-	// 			}
-	// 		}
-	// 	);
-	// }
-
-	// let walletAddress = "";
-	// if (!!twitterConfirmationProof) {
-	// 	// render connect wallet screen
-	// 	// check for a wallet address from the IDB
-	// 	walletAddress = "0x12345";
-	// 	handleRender(container, 4);
-	// }
-	// if (!!walletAddress) {
-	// 	// they have an account, just show them the home screen
-	// 	handleRender(container, 7);
-	// }
 });
 let logoutButton = document.getElementById("log-out-btn");
 logoutButton.addEventListener("click", logout);
