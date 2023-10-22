@@ -91,10 +91,23 @@ function addShowMore(container) {
 }
 
 async function getRecommendedPosts() {
-	let endpoint = "http://127.0.0.1:500/recomment";
+	console.log("GETTING RECOMMENDED POSTS");
+	let endpoint = "http://127.0.0.1:5000/recommend";
 	try {
-		let response = await fetch(endpoint);
+		let testRequest = await fetch("http://127.0.0.1:5000/names");
+		console.log("test request", testRequest, { method: "POST" });
+		let response = await fetch(endpoint, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: {
+				user_id: "0x01c807-0x30",
+			},
+		});
+		console.log("response", response);
 		let data = await response.json();
+		console.log("data", data);
 		return data;
 	} catch (error) {
 		console.error("Error:", error);
@@ -330,5 +343,7 @@ if (document.readyState === "loading") {
 } else {
 	addRecommendationTabButton();
 	addEventListenersToLikeButtons();
-	await getRecommendedPosts();
+	(async () => {
+		getRecommendedPosts();
+	})();
 }
