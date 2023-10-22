@@ -170,12 +170,15 @@ async function getRecommendedPosts() {
     console.error("Error:", error);
   }
 }
+<<<<<<< HEAD
 function injectScript(code) {
   let script = document.createElement("script");
   script.textContent = code;
   (document.head || document.documentElement).appendChild(script);
   script.remove();
 }
+=======
+>>>>>>> f9e7167a214a679db6718c6ca348108bd56ff676
 
 async function injectRecommendedPosts(container) {
   //grab the first child of the container and clone it into the variabke postTemplate
@@ -344,8 +347,7 @@ async function getTargetElement() {
 }
 
 async function addRecommendationTabButton() {
-  const buttonContainer = await getTargetElement();
-  console.log("button container", buttonContainer);
+	const buttonContainer = await getTargetElement();
 
   // Create the custom recommendation button
   const customRecommendationButton = createDomElement(`
@@ -354,21 +356,19 @@ async function addRecommendationTabButton() {
         </button>
     `);
 
-  // If the button container exists, append the custom button to it
-  if (!!buttonContainer) {
-    buttonContainer.append(customRecommendationButton);
-  } else {
-    // If the button container doesn't exist, append the custom button to the body as a fallback
-    document.body.append(customRecommendationButton);
-  }
-  let button = document.getElementById("cabal-sorel-button");
-  button.addEventListener("click", async () => {
-    const feedContainer = document.querySelector("div > article").parentElement;
-    // the feed container is the only div on the page where it's immediate children are article tags.
-
-    console.log("feed container", feedContainer);
-    await injectRecommendedPosts(feedContainer);
-  });
+	// If the button container exists, append the custom button to it
+	if (!!buttonContainer) {
+		buttonContainer.append(customRecommendationButton);
+	} else {
+		// If the button container doesn't exist, append the custom button to the body as a fallback
+		document.body.append(customRecommendationButton);
+	}
+	let button = document.getElementById("cabal-sorel-button");
+	button.addEventListener("click", async () => {
+		const feedContainer = document.querySelector("div > article").parentElement;
+		// the feed container is the only div on the page where it's immediate children are article tags.
+		await injectRecommendedPosts(feedContainer);
+	});
 }
 
 // This function takes a string of HTML, parses it into a DOM object, and returns the first child of the body.
@@ -408,3 +408,84 @@ if (document.readyState === "loading") {
     getRecommendedPosts();
   })();
 }
+function addLikeButtonEventListener(container) {
+	let likeXPath = "/div[2]/div[2]/span/div[3]/button";
+	let likeElement;
+
+	setTimeout(function () {
+		try {
+			likeElement = document.evaluate(
+				likeXPath,
+				container,
+				null,
+				XPathResult.FIRST_ORDERED_NODE_TYPE,
+				null
+			).singleNodeValue;
+		} catch (error) {
+			console.error("Error while evaluating XPath: ", error);
+		}
+		console.log("like", likeElement);
+		// Check if likeElement is not undefined before proceeding
+		if (likeElement) {
+			// Wrap the element in a new button that will propagate the click event and also fire a custom function
+			let wrapper = document.createElement("button");
+			wrapper.style.border = "1px solid green";
+			wrapper.addEventListener("click", (event) => {
+				customLikeEventListener(event);
+				likeElement.click();
+			});
+			likeElement.parentNode.replaceChild(wrapper, likeElement);
+			wrapper.appendChild(likeElement);
+		} else {
+			console.log("likeElement is undefined");
+		}
+	}, 2000); // Adjust the delay to suit the page's load time
+}
+function setupEventListeners() {
+	let articlesArray = [];
+	let previousLength = 0;
+	let noNewArticlesCount = 0;
+	setTimeout(function () {
+		let articleElements = document.getElementsByTagName("article");
+		if (articleElements.length > 0) {
+			console.log(articleElements);
+			for (let i = 0; i < articleElements.length; i++) {
+				articlesArray.push(articleElements[i]);
+			}
+		} else {
+			console.log("No articles found");
+		}
+		console.log(articlesArray);
+		console.log(articlesArray.length);
+		if (articlesArray.length > 0) {
+			// Log the post
+			articlesArray.forEach((post) => {
+				console.log("post", typeof post, post);
+				addLikeButtonEventListener(post);
+			});
+		} else {
+			// Log a message if no posts are found
+			console.log("No posts found");
+		}
+	}, 2000); // Adjust the delay to suit the page's load time
+
+	// Get all the elements that match the tag name "article"
+
+	// Check if there are any posts
+}
+
+function customLikeEventListener(event) {
+	console.log("CUSTOM CLICK");
+	console.log("event", event);
+	event.preventDefault();
+}
+// var observer = new MutationObserver(function (mutationsList, observer) {
+// 	console.log("mutation observed");
+// 	console.log(observer);
+// 	if (document.getElementsByTagName("article").length > 0) {
+// 		console.log(document.getElementsByTagName("article")[0]);
+// 		observer.disconnect(); // Stop observing once the element is found
+// 	}
+// });
+
+// observer.observe(document.body, { childList: true, subtree: true });
