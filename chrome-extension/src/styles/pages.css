@@ -69,7 +69,8 @@
 	padding: 0;
 }
 #profile-link,
-#home-link {
+#home-link,
+#log-out-link {
 	color: #fff;
 	font-family: Rajdhani;
 	font-size: 20px;
@@ -200,4 +201,18 @@
 #more-integrations > span:hover {
 	color: #fff;
 	text-decoration: underline;
+}
+
+#upload-twitter-history-form {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+}
+#upload-twitter-history-form input {
+	// hide input and replace it with a nice looking button
+	background-color: transparent;
+	border: 2px solid #fff;
+	padding: 20px;
+	border-radius: 10px;
 }

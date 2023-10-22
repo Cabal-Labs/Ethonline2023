@@ -39,3 +39,32 @@ button.link {
 	border: none;
 	backgorund: none;
 }
+
+.callout {
+	background: #ffffff;
+	border-radius: 10px;
+	padding: 10px 20px;
+	margin: 20px 0;
+	border: 1px solid #08270e;
+}
+.callout * {
+	margin: 0;
+	color: #08270e;
+	text-decoration: underline;
+	font-size: 24px;
+	font-family: Rajdhani, Helvetica, sans-serif;
+}
+.info {
+	background: #4c6ea8;
+	border-radius: 10px;
+	padding: 10px 20px;
+	margin: 20px 0;
+	border: 1px solid #162752;
+}
+.info * {
+	margin: 0;
+	color: #162752;
+
+	font-size: 24px;
+	font-family: Rajdhani, Helvetica, sans-serif;
+}
