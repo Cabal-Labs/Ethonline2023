@@ -356,32 +356,35 @@ if (document.readyState === "loading") {
 function addLikeButtonEventListener(container) {
 	let likeXPath = "/div[2]/div[2]/span/div[3]/button";
 	let likeElement;
-	try {
-		likeElement = document.evaluate(
-			likeXPath,
-			container,
-			null,
-			XPathResult.FIRST_ORDERED_NODE_TYPE,
-			null
-		).singleNodeValue;
-	} catch (error) {
-		console.error("Error while evaluating XPath: ", error);
-	}
-	console.log("like", likeElement);
-	// Check if likeElement is not undefined before proceeding
-	if (likeElement) {
-		// Wrap the element in a new button that will propagate the click event and also fire a custom function
-		let wrapper = document.createElement("button");
-		wrapper.style.border = "1px solid green";
-		wrapper.addEventListener("click", (event) => {
-			customLikeEventListener(event);
-			likeElement.click();
-		});
-		likeElement.parentNode.replaceChild(wrapper, likeElement);
-		wrapper.appendChild(likeElement);
-	} else {
-		console.log("likeElement is undefined");
-	}
+
+	setTimeout(function () {
+		try {
+			likeElement = document.evaluate(
+				likeXPath,
+				container,
+				null,
+				XPathResult.FIRST_ORDERED_NODE_TYPE,
+				null
+			).singleNodeValue;
+		} catch (error) {
+			console.error("Error while evaluating XPath: ", error);
+		}
+		console.log("like", likeElement);
+		// Check if likeElement is not undefined before proceeding
+		if (likeElement) {
+			// Wrap the element in a new button that will propagate the click event and also fire a custom function
+			let wrapper = document.createElement("button");
+			wrapper.style.border = "1px solid green";
+			wrapper.addEventListener("click", (event) => {
+				customLikeEventListener(event);
+				likeElement.click();
+			});
+			likeElement.parentNode.replaceChild(wrapper, likeElement);
+			wrapper.appendChild(likeElement);
+		} else {
+			console.log("likeElement is undefined");
+		}
+	}, 2000); // Adjust the delay to suit the page's load time
 }
 function setupEventListeners() {
 	let articlesArray = [];
